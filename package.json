@@ -1,0 +1,14 @@
+{
+  "name": "aksescheck-id",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web run dev",
+    "build:web": "pnpm --filter web run build",
+    "lint:web": "pnpm --filter web run lint",
+    "sync:axe": "cp node_modules/axe-core/axe.min.js embedded/axe.min.js",
+    "generate:api": "pnpm --dir apps/web exec openapi-typescript ../../openapi/openapi.yaml -o src/lib/api/schema.d.ts"
+  },
+  "devDependencies": {
+    "axe-core": "^4.12.1"
+  }
+}
