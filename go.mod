@@ -1,4 +1,4 @@
-module github.com/ki1bot/aksescheck-id
+module github.com/ki1bot/aksesibilitas-website
 
 go 1.26.2
 
