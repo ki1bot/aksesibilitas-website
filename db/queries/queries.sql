@@ -654,7 +654,7 @@ SET
     review_status = sqlc.arg(review_status),
     notes = sqlc.arg(notes),
     updated_at = NOW()
-WHERE id = sqlc.arg(violation_id)
+WHERE violations.id = sqlc.arg(violation_id)
   AND EXISTS (
       SELECT 1
       FROM scanned_pages
@@ -666,18 +666,18 @@ WHERE id = sqlc.arg(violation_id)
         AND project_members.user_id = sqlc.arg(user_id)
   )
 RETURNING
-    id,
-    scanned_page_id,
-    rule_id,
-    impact,
-    description,
-    help,
-    help_url,
-    tags,
-    review_status,
-    notes,
-    created_at,
-    updated_at;
+    violations.id,
+    violations.scanned_page_id,
+    violations.rule_id,
+    violations.impact,
+    violations.description,
+    violations.help,
+    violations.help_url,
+    violations.tags,
+    violations.review_status,
+    violations.notes,
+    violations.created_at,
+    violations.updated_at;
 
 -- name: CreateManualReview :one
 INSERT INTO manual_reviews (
@@ -756,7 +756,7 @@ SET
     status = sqlc.arg(status),
     notes = sqlc.arg(notes),
     updated_at = NOW()
-WHERE id = sqlc.arg(item_id)
+WHERE manual_review_items.id = sqlc.arg(item_id)
   AND EXISTS (
       SELECT 1
       FROM manual_reviews
@@ -768,15 +768,15 @@ WHERE id = sqlc.arg(item_id)
         AND project_members.user_id = sqlc.arg(user_id)
   )
 RETURNING
-    id,
-    manual_review_id,
-    criterion,
-    instruction,
-    status,
-    notes,
-    position,
-    created_at,
-    updated_at;
+    manual_review_items.id,
+    manual_review_items.manual_review_id,
+    manual_review_items.criterion,
+    manual_review_items.instruction,
+    manual_review_items.status,
+    manual_review_items.notes,
+    manual_review_items.position,
+    manual_review_items.created_at,
+    manual_review_items.updated_at;
 
 -- name: RefreshManualReviewStatus :exec
 UPDATE manual_reviews
@@ -785,19 +785,21 @@ SET
         WHEN EXISTS (
             SELECT 1
             FROM manual_review_items
-            WHERE manual_review_id = sqlc.arg(manual_review_id)
-              AND status = 'failed'
+            WHERE manual_review_items.manual_review_id =
+                sqlc.arg(target_manual_review_id)
+              AND manual_review_items.status = 'failed'
         ) THEN 'failed'::review_status
         WHEN EXISTS (
             SELECT 1
             FROM manual_review_items
-            WHERE manual_review_id = sqlc.arg(manual_review_id)
-              AND status = 'pending'
+            WHERE manual_review_items.manual_review_id =
+                sqlc.arg(target_manual_review_id)
+              AND manual_review_items.status = 'pending'
         ) THEN 'pending'::review_status
         ELSE 'passed'::review_status
     END,
     updated_at = NOW()
-WHERE id = sqlc.arg(manual_review_id);
+WHERE manual_reviews.id = sqlc.arg(target_manual_review_id);
 
 -- name: ResetManualReview :exec
 UPDATE manual_review_items
@@ -805,10 +807,10 @@ SET
     status = 'pending',
     notes = '',
     updated_at = NOW()
-WHERE manual_review_id = (
-    SELECT id
+WHERE manual_review_items.manual_review_id = (
+    SELECT manual_reviews.id
     FROM manual_reviews
-    WHERE scan_id = sqlc.arg(scan_id)
+    WHERE manual_reviews.scan_id = sqlc.arg(scan_id)
 );
 
 -- name: ResetManualReviewStatus :exec

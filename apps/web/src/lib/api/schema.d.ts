@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/scans": {
+    "/auth/register": {
         parameters: {
             query?: never;
             header?: never;
@@ -29,6 +29,114 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        /** Membuat akun baru */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Masuk ke akun */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mengakhiri sesi */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mengambil pengguna yang sedang login */
+        get: operations["getCurrentUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mengambil project pengguna */
+        get: operations["listProjects"];
+        put?: never;
+        /** Membuat project */
+        post: operations["createProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{projectId}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: components["parameters"]["ProjectID"];
+            };
+            cookie?: never;
+        };
+        /** Mengambil detail project */
+        get: operations["getProject"];
+        put?: never;
+        post?: never;
+        /** Menghapus project */
+        delete: operations["deleteProject"];
+        options?: never;
+        head?: never;
+        /** Memperbarui project */
+        patch: operations["updateProject"];
+        trace?: never;
+    };
+    "/scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mengambil histori scan */
+        get: operations["listScans"];
         put?: never;
         /** Membuat pemindaian baru */
         post: operations["createScan"];
@@ -38,15 +146,190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/scans/{scanId}": {
+    "/scans/{scanId}/": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
             cookie?: never;
         };
         /** Mengambil detail scan */
         get: operations["getScan"];
+        put?: never;
+        post?: never;
+        /** Menghapus scan */
+        delete: operations["deleteScan"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scans/{scanId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Membatalkan scan */
+        post: operations["cancelScan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scans/{scanId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mengulangi scan yang gagal atau dibatalkan */
+        post: operations["retryScan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scans/{scanId}/violations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        /** Mengambil seluruh violation suatu scan */
+        get: operations["listViolations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/violations/{violationId}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                violationId: components["parameters"]["ViolationID"];
+            };
+            cookie?: never;
+        };
+        /** Mengambil violation dan DOM node */
+        get: operations["getViolation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Memperbarui hasil review violation */
+        patch: operations["updateViolation"];
+        trace?: never;
+    };
+    "/scans/{scanId}/manual-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        /** Mengambil checklist pemeriksaan manual */
+        get: operations["getManualReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/manual-review/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ManualReviewItemID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Memperbarui item pemeriksaan manual */
+        patch: operations["updateManualReviewItem"];
+        trace?: never;
+    };
+    "/scans/{scanId}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Membuat laporan JSON atau PDF */
+        post: operations["createReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportID"];
+            };
+            cookie?: never;
+        };
+        /** Mengambil metadata laporan */
+        get: operations["getReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportID"];
+            };
+            cookie?: never;
+        };
+        /** Mengunduh laporan */
+        get: operations["downloadReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -67,11 +350,52 @@ export interface components {
             /** @enum {string} */
             redis: "ok" | "unavailable";
         };
+        RegisterRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        LoginRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        AuthResponse: {
+            user: components["schemas"]["User"];
+            csrf_token: string;
+        };
+        User: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: email */
+            email: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ProjectRequest: {
+            name: string;
+            description: string;
+        };
+        Project: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            owner_id: string;
+            name: string;
+            description: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
         CreateScanRequest: {
-            /**
-             * Format: uri
-             * @example https://example.com
-             */
+            /** Format: uuid */
+            project_id: string;
+            /** Format: uri */
             url: string;
         };
         /** @enum {string} */
@@ -79,22 +403,182 @@ export interface components {
         Scan: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            project_id: string;
+            /** Format: uuid */
+            created_by: string;
             /** Format: uri */
             url: string;
             status: components["schemas"]["ScanStatus"];
+            page_title: string;
+            automated_score: number;
+            critical_count: number;
+            serious_count: number;
+            moderate_count: number;
+            minor_count: number;
             error_message?: string;
+            /** Format: int64 */
+            duration_ms: number;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        /** @enum {string} */
+        ViolationImpact: "critical" | "serious" | "moderate" | "minor";
+        /** @enum {string} */
+        ReviewStatus: "pending" | "passed" | "failed" | "not_applicable";
+        Violation: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            scanned_page_id: string;
+            rule_id: string;
+            impact: components["schemas"]["ViolationImpact"];
+            description: string;
+            help: string;
+            help_url: string;
+            tags: string[];
+            review_status: components["schemas"]["ReviewStatus"];
+            notes: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ViolationNode: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            violation_id: string;
+            html: string;
+            target: string[];
+            failure_summary: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        ViolationDetail: {
+            violation: components["schemas"]["Violation"];
+            nodes: components["schemas"]["ViolationNode"][];
+        };
+        ReviewRequest: {
+            status: components["schemas"]["ReviewStatus"];
+            notes: string;
+        };
+        ManualReview: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            scan_id: string;
+            status: components["schemas"]["ReviewStatus"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ManualReviewItem: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            manual_review_id: string;
+            criterion: string;
+            instruction: string;
+            status: components["schemas"]["ReviewStatus"];
+            notes: string;
+            position: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ManualReviewResponse: {
+            review: components["schemas"]["ManualReview"];
+            items: components["schemas"]["ManualReviewItem"][];
+        };
+        /** @enum {string} */
+        ReportFormat: "json" | "pdf";
+        CreateReportRequest: {
+            format: components["schemas"]["ReportFormat"];
+        };
+        Report: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            scan_id: string;
+            format: components["schemas"]["ReportFormat"];
+            filename: string;
+            content_type: string;
+            /** Format: date-time */
+            created_at: string;
         };
         ErrorResponse: {
             code: string;
             message: string;
         };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Request tidak valid */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description Pengguna belum login atau sesi sudah berakhir */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description Request ditolak */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description Data tidak ditemukan */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description Request bertentangan dengan status data saat ini */
+        Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description Batas request terlampaui */
+        TooManyRequests: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+    };
+    parameters: {
+        ProjectID: string;
+        ScanID: string;
+        ViolationID: string;
+        ManualReviewItemID: string;
+        ReportID: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -110,7 +594,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description API, PostgreSQL, dan Redis tersedia */
+            /** @description Semua layanan tersedia */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -130,6 +614,250 @@ export interface operations {
             };
         };
     };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Pendaftaran berhasil */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login berhasil */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logout berhasil */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Data pengguna */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    listProjects: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar project */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    createProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            /** @description Project berhasil dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: components["parameters"]["ProjectID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detail project */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: components["parameters"]["ProjectID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Project berhasil dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: components["parameters"]["ProjectID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            /** @description Project berhasil diperbarui */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listScans: {
+        parameters: {
+            query?: {
+                project_id?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar scan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scan"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     createScan: {
         parameters: {
             query?: never;
@@ -143,7 +871,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Scan berhasil dibuat dan dimasukkan ke antrean */
+            /** @description Scan berhasil dimasukkan ke antrean */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -152,24 +880,11 @@ export interface operations {
                     "application/json": components["schemas"]["Scan"];
                 };
             };
-            /** @description URL atau body request tidak valid */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Kesalahan database atau antrean */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     getScan: {
@@ -177,7 +892,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                scanId: string;
+                scanId: components["parameters"]["ScanID"];
             };
             cookie?: never;
         };
@@ -192,33 +907,293 @@ export interface operations {
                     "application/json": components["schemas"]["Scan"];
                 };
             };
-            /** @description Format scan ID tidak valid */
-            400: {
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteScan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Scan berhasil dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    cancelScan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Scan berhasil dibatalkan */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["Scan"];
                 };
             };
-            /** @description Scan tidak ditemukan */
-            404: {
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    retryScan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Scan berhasil dimasukkan kembali ke antrean */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["Scan"];
                 };
             };
-            /** @description Kesalahan database */
-            500: {
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listViolations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar violation */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["Violation"][];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getViolation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                violationId: components["parameters"]["ViolationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detail violation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViolationDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateViolation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                violationId: components["parameters"]["ViolationID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Review berhasil diperbarui */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Violation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getManualReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Data pemeriksaan manual */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualReviewResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateManualReviewItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ManualReviewItemID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Item berhasil diperbarui */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualReviewItem"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scanId: components["parameters"]["ScanID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Laporan berhasil dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Report"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Metadata laporan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Report"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    downloadReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Isi file laporan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
 }

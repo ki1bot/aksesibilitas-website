@@ -14,6 +14,7 @@ import (
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/fetch"
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 
 	"github.com/ki1bot/aksesibilitas-website/embedded"
@@ -156,7 +157,7 @@ func (scanner *Scanner) Scan(
 			if data, ok :=
 				event.(*network.EventDataReceived); ok {
 				if receivedBytes.Add(
-					data.EncodedDataLength,
+					int64(data.EncodedDataLength),
 				) > 25<<20 {
 					setBlockedReason(
 						"total data halaman melebihi batas 25 MB",
@@ -270,7 +271,6 @@ func (scanner *Scanner) Scan(
 	var pageLanguage string
 	var finalURL string
 	var axeResult axeResponse
-	var ignored any
 
 	err = chromedp.Run(
 		browserContext,
@@ -305,7 +305,7 @@ func (scanner *Scanner) Scan(
 		),
 		chromedp.Evaluate(
 			embedded.AxeSource,
-			&ignored,
+			nil,
 		),
 		chromedp.Evaluate(
 			`new Promise((resolve) => {
@@ -337,7 +337,11 @@ func (scanner *Scanner) Scan(
 				});
 			})`,
 			&axeResult,
-			chromedp.AwaitPromise,
+			func(
+				params *runtime.EvaluateParams,
+			) *runtime.EvaluateParams {
+				return params.WithAwaitPromise(true)
+			},
 		),
 	)
 
@@ -353,7 +357,9 @@ func (scanner *Scanner) Scan(
 	}
 
 	if axeResult.Error != "" {
-		return Result{}, errors.New(axeResult.Error)
+		return Result{}, errors.New(
+			axeResult.Error,
+		)
 	}
 
 	return Result{

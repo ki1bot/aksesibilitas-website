@@ -2,20 +2,31 @@ openapi: 3.1.0
 
 info:
   title: AksesCheck ID API
-  version: 0.1.0
-  description: API untuk pemindaian aksesibilitas website.
+  version: 1.0.0
+  description: API AksesCheck ID untuk autentikasi, project, pemindaian aksesibilitas, pemeriksaan manual, dan laporan.
 
 servers:
   - url: http://localhost:8080/api/v1
 
+tags:
+  - name: System
+  - name: Authentication
+  - name: Projects
+  - name: Scans
+  - name: Violations
+  - name: Manual Review
+  - name: Reports
+
 paths:
   /health:
     get:
+      tags:
+        - System
       operationId: getHealth
       summary: Memeriksa kondisi API
       responses:
         "200":
-          description: API, PostgreSQL, dan Redis tersedia
+          description: Semua layanan tersedia
           content:
             application/json:
               schema:
@@ -27,10 +38,250 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
 
-  /scans:
+  /auth/register:
     post:
+      tags:
+        - Authentication
+      operationId: register
+      summary: Membuat akun baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Pendaftaran berhasil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: login
+      summary: Masuk ke akun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      operationId: logout
+      summary: Mengakhiri sesi
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Logout berhasil
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      operationId: getCurrentUser
+      summary: Mengambil pengguna yang sedang login
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Data pengguna
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      operationId: listProjects
+      summary: Mengambil project pengguna
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Daftar project
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags:
+        - Projects
+      operationId: createProject
+      summary: Membuat project
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectRequest"
+      responses:
+        "201":
+          description: Project berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/:
+    parameters:
+      - $ref: "#/components/parameters/ProjectID"
+
+    get:
+      tags:
+        - Projects
+      operationId: getProject
+      summary: Mengambil detail project
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Detail project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags:
+        - Projects
+      operationId: updateProject
+      summary: Memperbarui project
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectRequest"
+      responses:
+        "200":
+          description: Project berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Projects
+      operationId: deleteProject
+      summary: Menghapus project
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Project berhasil dihapus
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans:
+    get:
+      tags:
+        - Scans
+      operationId: listScans
+      summary: Mengambil histori scan
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Daftar scan
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags:
+        - Scans
       operationId: createScan
       summary: Membuat pemindaian baru
+      security:
+        - sessionCookie: []
       requestBody:
         required: true
         content:
@@ -39,35 +290,33 @@ paths:
               $ref: "#/components/schemas/CreateScanRequest"
       responses:
         "201":
-          description: Scan berhasil dibuat dan dimasukkan ke antrean
+          description: Scan berhasil dimasukkan ke antrean
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Scan"
         "400":
-          description: URL atau body request tidak valid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Kesalahan database atau antrean
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
-  /scans/{scanId}:
+  /scans/{scanId}/:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
     get:
+      tags:
+        - Scans
       operationId: getScan
       summary: Mengambil detail scan
-      parameters:
-        - name: scanId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: Detail scan
@@ -75,29 +324,392 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Scan"
-        "400":
-          description: Format scan ID tidak valid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Scan tidak ditemukan
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Scans
+      operationId: deleteScan
+      summary: Menghapus scan
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Scan berhasil dihapus
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans/{scanId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
+    post:
+      tags:
+        - Scans
+      operationId: cancelScan
+      summary: Membatalkan scan
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Scan berhasil dibatalkan
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Kesalahan database
+                $ref: "#/components/schemas/Scan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans/{scanId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
+    post:
+      tags:
+        - Scans
+      operationId: retryScan
+      summary: Mengulangi scan yang gagal atau dibatalkan
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Scan berhasil dimasukkan kembali ke antrean
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/Scan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans/{scanId}/violations:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
+    get:
+      tags:
+        - Violations
+      operationId: listViolations
+      summary: Mengambil seluruh violation suatu scan
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Daftar violation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Violation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /violations/{violationId}/:
+    parameters:
+      - $ref: "#/components/parameters/ViolationID"
+
+    get:
+      tags:
+        - Violations
+      operationId: getViolation
+      summary: Mengambil violation dan DOM node
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Detail violation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViolationDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags:
+        - Violations
+      operationId: updateViolation
+      summary: Memperbarui hasil review violation
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequest"
+      responses:
+        "200":
+          description: Review berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Violation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans/{scanId}/manual-review:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
+    get:
+      tags:
+        - Manual Review
+      operationId: getManualReview
+      summary: Mengambil checklist pemeriksaan manual
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Data pemeriksaan manual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManualReviewResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /manual-review/items/{itemId}:
+    parameters:
+      - $ref: "#/components/parameters/ManualReviewItemID"
+
+    patch:
+      tags:
+        - Manual Review
+      operationId: updateManualReviewItem
+      summary: Memperbarui item pemeriksaan manual
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequest"
+      responses:
+        "200":
+          description: Item berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManualReviewItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scans/{scanId}/reports:
+    parameters:
+      - $ref: "#/components/parameters/ScanID"
+
+    post:
+      tags:
+        - Reports
+      operationId: createReport
+      summary: Membuat laporan JSON atau PDF
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportRequest"
+      responses:
+        "201":
+          description: Laporan berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /reports/{reportId}:
+    parameters:
+      - $ref: "#/components/parameters/ReportID"
+
+    get:
+      tags:
+        - Reports
+      operationId: getReport
+      summary: Mengambil metadata laporan
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Metadata laporan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /reports/{reportId}/download:
+    parameters:
+      - $ref: "#/components/parameters/ReportID"
+
+    get:
+      tags:
+        - Reports
+      operationId: downloadReport
+      summary: Mengunduh laporan
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Isi file laporan
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: aksesibilitaswebsite_session
+
+  parameters:
+    ProjectID:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ScanID:
+      name: scanId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ViolationID:
+      name: violationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ManualReviewItemID:
+      name: itemId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ReportID:
+      name: reportId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Request tidak valid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Pengguna belum login atau sesi sudah berakhir
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Request ditolak
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Data tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Request bertentangan dengan status data saat ini
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    TooManyRequests:
+      description: Batas request terlampaui
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
     HealthResponse:
       type: object
+      additionalProperties: false
       required:
         - status
         - database
@@ -119,19 +731,137 @@ components:
             - ok
             - unavailable
 
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 10
+          maxLength: 72
+
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - user
+        - csrf_token
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        csrf_token:
+          type: string
+
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - email
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProjectRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+
+    Project:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - owner_id
+        - name
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     CreateScanRequest:
       type: object
       additionalProperties: false
       required:
+        - project_id
         - url
       properties:
+        project_id:
+          type: string
+          format: uuid
         url:
           type: string
           format: uri
           minLength: 1
           maxLength: 2048
-          examples:
-            - https://example.com
 
     ScanStatus:
       type: string
@@ -144,14 +874,30 @@ components:
 
     Scan:
       type: object
+      additionalProperties: false
       required:
         - id
+        - project_id
+        - created_by
         - url
         - status
+        - page_title
+        - automated_score
+        - critical_count
+        - serious_count
+        - moderate_count
+        - minor_count
+        - duration_ms
         - created_at
         - updated_at
       properties:
         id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        created_by:
           type: string
           format: uuid
         url:
@@ -159,7 +905,93 @@ components:
           format: uri
         status:
           $ref: "#/components/schemas/ScanStatus"
+        page_title:
+          type: string
+        automated_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        critical_count:
+          type: integer
+          minimum: 0
+        serious_count:
+          type: integer
+          minimum: 0
+        moderate_count:
+          type: integer
+          minimum: 0
+        minor_count:
+          type: integer
+          minimum: 0
         error_message:
+          type: string
+        duration_ms:
+          type: integer
+          format: int64
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ViolationImpact:
+      type: string
+      enum:
+        - critical
+        - serious
+        - moderate
+        - minor
+
+    ReviewStatus:
+      type: string
+      enum:
+        - pending
+        - passed
+        - failed
+        - not_applicable
+
+    Violation:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - scanned_page_id
+        - rule_id
+        - impact
+        - description
+        - help
+        - help_url
+        - tags
+        - review_status
+        - notes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scanned_page_id:
+          type: string
+          format: uuid
+        rule_id:
+          type: string
+        impact:
+          $ref: "#/components/schemas/ViolationImpact"
+        description:
+          type: string
+        help:
+          type: string
+        help_url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        review_status:
+          $ref: "#/components/schemas/ReviewStatus"
+        notes:
           type: string
         created_at:
           type: string
@@ -168,8 +1000,183 @@ components:
           type: string
           format: date-time
 
+    ViolationNode:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - violation_id
+        - html
+        - target
+        - failure_summary
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        violation_id:
+          type: string
+          format: uuid
+        html:
+          type: string
+        target:
+          type: array
+          items:
+            type: string
+        failure_summary:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ViolationDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - violation
+        - nodes
+      properties:
+        violation:
+          $ref: "#/components/schemas/Violation"
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ViolationNode"
+
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - notes
+      properties:
+        status:
+          $ref: "#/components/schemas/ReviewStatus"
+        notes:
+          type: string
+          maxLength: 5000
+
+    ManualReview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - scan_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scan_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/ReviewStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ManualReviewItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - manual_review_id
+        - criterion
+        - instruction
+        - status
+        - notes
+        - position
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        manual_review_id:
+          type: string
+          format: uuid
+        criterion:
+          type: string
+        instruction:
+          type: string
+        status:
+          $ref: "#/components/schemas/ReviewStatus"
+        notes:
+          type: string
+        position:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ManualReviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - review
+        - items
+      properties:
+        review:
+          $ref: "#/components/schemas/ManualReview"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManualReviewItem"
+
+    ReportFormat:
+      type: string
+      enum:
+        - json
+        - pdf
+
+    CreateReportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - format
+      properties:
+        format:
+          $ref: "#/components/schemas/ReportFormat"
+
+    Report:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - scan_id
+        - format
+        - filename
+        - content_type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scan_id:
+          type: string
+          format: uuid
+        format:
+          $ref: "#/components/schemas/ReportFormat"
+        filename:
+          type: string
+        content_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
     ErrorResponse:
       type: object
+      additionalProperties: false
       required:
         - code
         - message
