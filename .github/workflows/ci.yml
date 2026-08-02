@@ -1,0 +1,109 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download Go dependencies
+        run: go mod download
+
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.0
+
+      - name: Generate sqlc package
+        run: sqlc generate
+
+      - name: Verify generated sqlc files
+        run: git diff --exit-code -- internal/database/sqlcgen
+
+      - name: Verify Go formatting
+        shell: bash
+        run: |
+          files="$(find . -type f -name '*.go' -not -path './vendor/*')"
+          unformatted="$(gofmt -l $files)"
+
+          if [ -n "$unformatted" ]; then
+            echo "File Go berikut belum diformat:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Run Go vet
+        run: go vet ./...
+
+      - name: Run Go tests
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Display Go coverage
+        run: go tool cover -func=coverage.out
+
+  web:
+    name: Web validation
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+      NEXT_PUBLIC_CSRF_COOKIE_NAME: aksesibilitaswebsite_session_csrf
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Synchronize axe-core
+        run: pnpm sync:axe
+
+      - name: Generate OpenAPI types
+        run: pnpm generate:api
+
+      - name: Verify generated OpenAPI types
+        run: git diff --exit-code -- apps/web/src/lib/api/schema.d.ts
+
+      - name: Run ESLint
+        run: pnpm lint:web
+
+      - name: Run TypeScript validation
+        run: pnpm typecheck:web
+
+      - name: Build Next.js
+        run: pnpm build:web

@@ -6,12 +6,21 @@
     "dev:web": "pnpm --filter web dev",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint",
+    "typecheck:web": "pnpm --filter web typecheck",
     "sync:axe": "node scripts/sync-axe.mjs",
     "generate:api": "pnpm --filter web generate:api",
     "dev:api": "go run ./services/api/cmd/api",
     "dev:worker": "go run ./services/worker/cmd/worker",
     "generate:sql": "sqlc generate",
-    "generate": "pnpm generate:sql && pnpm generate:api"
+    "generate": "pnpm generate:sql && pnpm generate:api",
+    "format:go": "go fmt ./...",
+    "vet:go": "go vet ./...",
+    "test:go": "go test ./...",
+    "test:go:race": "go test -race ./...",
+    "check:go": "go fmt ./... && go vet ./... && go test ./...",
+    "check:web": "pnpm generate:api && pnpm lint:web && pnpm typecheck:web && pnpm build:web",
+    "check": "pnpm check:go && pnpm check:web",
+    "test": "pnpm test:go"
   },
   "devDependencies": {
     "axe-core": "^4.12.1"

@@ -135,9 +135,23 @@ func ResolvePublicAddresses(
 	ctx context.Context,
 	hostname string,
 ) ([]netip.Addr, error) {
+	hostname = strings.TrimSpace(hostname)
+
+	if hostname == "" {
+		return nil, errors.New(
+			"hostname wajib diisi",
+		)
+	}
+
 	addresses, err := resolveAddresses(ctx, hostname)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(addresses) == 0 {
+		return nil, errors.New(
+			"hostname tidak menghasilkan alamat IP",
+		)
 	}
 
 	for _, address := range addresses {
