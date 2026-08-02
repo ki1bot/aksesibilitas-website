@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"log"
-	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/hibiken/asynq"
 
-	"github.com/ki1bot/aksescheck-id/internal/config"
-	"github.com/ki1bot/aksescheck-id/internal/database"
-	db "github.com/ki1bot/aksescheck-id/internal/database/db"
-	taskqueue "github.com/ki1bot/aksescheck-id/internal/queue"
-	"github.com/ki1bot/aksescheck-id/internal/worker"
+	"github.com/ki1bot/aksesibilitas-website/internal/config"
+	"github.com/ki1bot/aksesibilitas-website/internal/database"
+	taskqueue "github.com/ki1bot/aksesibilitas-website/internal/queue"
+	"github.com/ki1bot/aksesibilitas-website/internal/worker"
 )
 
 func main() {
@@ -20,8 +20,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pool, err := database.Open(
+	ctx, stop := signal.NotifyContext(
 		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	pool, err := database.Open(
+		ctx,
 		cfg.DatabaseURL,
 	)
 	if err != nil {
@@ -29,31 +36,38 @@ func main() {
 	}
 	defer pool.Close()
 
+	redisOptions := asynq.RedisClientOpt{
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	}
+
 	server := asynq.NewServer(
-		asynq.RedisClientOpt{
-			Addr:     cfg.RedisAddr,
-			Password: cfg.RedisPassword,
-			DB:       cfg.RedisDB,
-		},
+		redisOptions,
 		asynq.Config{
 			Concurrency: cfg.WorkerConcurrency,
 			Queues: map[string]int{
 				cfg.ScanQueue: 1,
 			},
-			ShutdownTimeout: 30 * time.Second,
+			StrictPriority: true,
 		},
 	)
 
 	mux := asynq.NewServeMux()
 
-	mux.Handle(
-		taskqueue.TypeAccessibilityScan,
-		worker.NewScanHandler(db.New(pool)),
+	scanHandler := worker.NewScanHandler(
+		pool,
+		cfg.ChromePath,
+	)
+
+	mux.HandleFunc(
+		taskqueue.AccessibilityScanTask,
+		scanHandler.ProcessTask,
 	)
 
 	log.Printf(
-		"AksesCheck worker berjalan pada antrean %s",
-		cfg.ScanQueue,
+		"AksesCheck ID worker berjalan dengan concurrency %d",
+		cfg.WorkerConcurrency,
 	)
 
 	if err := server.Run(mux); err != nil {

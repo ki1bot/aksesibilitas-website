@@ -2,12 +2,13 @@ package queue
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/hibiken/asynq"
 )
 
-const TypeAccessibilityScan = "accessibility:scan"
+const AccessibilityScanTask = "accessibility:scan"
 
 type AccessibilityScanPayload struct {
 	ScanID string `json:"scan_id"`
@@ -16,23 +17,38 @@ type AccessibilityScanPayload struct {
 
 func NewAccessibilityScanTask(
 	scanID string,
-	targetURL string,
+	url string,
 	queueName string,
 	timeout time.Duration,
-) (*asynq.Task, error) {
-	payload, err := json.Marshal(AccessibilityScanPayload{
-		ScanID: scanID,
-		URL:    targetURL,
-	})
+) (*asynq.Task, []asynq.Option, error) {
+	payload, err := json.Marshal(
+		AccessibilityScanPayload{
+			ScanID: scanID,
+			URL:    url,
+		},
+	)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf(
+			"gagal membuat payload scan: %w",
+			err,
+		)
 	}
 
-	return asynq.NewTask(
-		TypeAccessibilityScan,
+	task := asynq.NewTask(
+		AccessibilityScanTask,
 		payload,
+	)
+
+	options := []asynq.Option{
 		asynq.Queue(queueName),
-		asynq.MaxRetry(2),
+		asynq.TaskID(TaskID(scanID)),
 		asynq.Timeout(timeout),
-	), nil
+		asynq.MaxRetry(2),
+	}
+
+	return task, options, nil
+}
+
+func TaskID(scanID string) string {
+	return "scan:" + scanID
 }

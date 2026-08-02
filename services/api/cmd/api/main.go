@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -13,9 +12,9 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/ki1bot/aksescheck-id/internal/config"
-	"github.com/ki1bot/aksescheck-id/internal/database"
-	"github.com/ki1bot/aksescheck-id/internal/httpapi"
+	"github.com/ki1bot/aksesibilitas-website/internal/config"
+	"github.com/ki1bot/aksesibilitas-website/internal/database"
+	"github.com/ki1bot/aksesibilitas-website/internal/httpapi"
 )
 
 func main() {
@@ -24,9 +23,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rootContext := context.Background()
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
-	pool, err := database.Open(rootContext, cfg.DatabaseURL)
+	pool, err := database.Open(
+		ctx,
+		cfg.DatabaseURL,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,6 +48,25 @@ func main() {
 	)
 	defer redisClient.Close()
 
+	pingContext, cancelPing :=
+		context.WithTimeout(
+			ctx,
+			5*time.Second,
+		)
+
+	if err := redisClient.Ping(
+		pingContext,
+	).Err(); err != nil {
+		cancelPing()
+
+		log.Fatalf(
+			"Redis tidak dapat dihubungi: %v",
+			err,
+		)
+	}
+
+	cancelPing()
+
 	queueClient := asynq.NewClient(
 		asynq.RedisClientOpt{
 			Addr:     cfg.RedisAddr,
@@ -50,52 +76,55 @@ func main() {
 	)
 	defer queueClient.Close()
 
-	handler := httpapi.NewRouter(
-		cfg,
-		pool,
-		redisClient,
-		queueClient,
-	)
-
 	server := &http.Server{
-		Addr:              cfg.APIAddr,
-		Handler:           handler,
-		ReadHeaderTimeout: 5 * time.Second,
+		Addr: cfg.APIAddr,
+		Handler: httpapi.NewRouter(
+			cfg,
+			pool,
+			redisClient,
+			queueClient,
+		),
+		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		WriteTimeout:      90 * time.Second,
+		IdleTimeout:       2 * time.Minute,
 	}
-
-	signalContext, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
-	defer stop()
-
-	errorChannel := make(chan error, 1)
 
 	go func() {
-		log.Printf("AksesCheck API berjalan pada %s", cfg.APIAddr)
-		errorChannel <- server.ListenAndServe()
+		log.Printf(
+			"AksesCheck ID API berjalan pada %s",
+			cfg.APIAddr,
+		)
+
+		err := server.ListenAndServe()
+
+		if err != nil &&
+			!errors.Is(
+				err,
+				http.ErrServerClosed,
+			) {
+			log.Fatalf(
+				"API berhenti: %v",
+				err,
+			)
+		}
 	}()
 
-	select {
-	case <-signalContext.Done():
-	case serverError := <-errorChannel:
-		if !errors.Is(serverError, http.ErrServerClosed) {
-			log.Fatal(serverError)
-		}
-		return
-	}
+	<-ctx.Done()
 
-	shutdownContext, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
-	defer cancel()
+	shutdownContext, cancelShutdown :=
+		context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+	defer cancelShutdown()
 
-	if err := server.Shutdown(shutdownContext); err != nil {
-		log.Printf("gagal menghentikan server dengan bersih: %v", err)
+	if err := server.Shutdown(
+		shutdownContext,
+	); err != nil {
+		log.Printf(
+			"API gagal berhenti dengan bersih: %v",
+			err,
+		)
 	}
 }

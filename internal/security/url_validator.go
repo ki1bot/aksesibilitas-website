@@ -35,10 +35,27 @@ var blockedPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("ff00::/8"),
 }
 
-func ValidatePublicHTTPURL(ctx context.Context, rawURL string) (string, error) {
+var blockedHostnames = map[string]struct{}{
+	"localhost":                  {},
+	"metadata.google.internal":   {},
+	"metadata.azure.internal":    {},
+	"instance-data.ec2.internal": {},
+	"kubernetes.default":         {},
+	"kubernetes.default.svc":     {},
+}
+
+func ValidatePublicHTTPURL(
+	ctx context.Context,
+	rawURL string,
+) (string, error) {
 	rawURL = strings.TrimSpace(rawURL)
+
 	if rawURL == "" {
 		return "", errors.New("URL wajib diisi")
+	}
+
+	if len(rawURL) > 2048 {
+		return "", errors.New("URL maksimal 2048 karakter")
 	}
 
 	parsedURL, err := url.ParseRequestURI(rawURL)
@@ -46,16 +63,23 @@ func ValidatePublicHTTPURL(ctx context.Context, rawURL string) (string, error) {
 		return "", errors.New("format URL tidak valid")
 	}
 
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return "", errors.New("scheme URL hanya boleh http atau https")
+	if parsedURL.Scheme != "http" &&
+		parsedURL.Scheme != "https" {
+		return "", errors.New(
+			"scheme URL hanya boleh http atau https",
+		)
 	}
 
 	if parsedURL.Host == "" {
-		return "", errors.New("hostname URL wajib diisi")
+		return "", errors.New(
+			"hostname URL wajib diisi",
+		)
 	}
 
 	if parsedURL.User != nil {
-		return "", errors.New("URL tidak boleh mengandung kredensial")
+		return "", errors.New(
+			"URL tidak boleh mengandung kredensial",
+		)
 	}
 
 	hostname := strings.TrimSuffix(
@@ -64,11 +88,22 @@ func ValidatePublicHTTPURL(ctx context.Context, rawURL string) (string, error) {
 	)
 
 	if hostname == "" {
-		return "", errors.New("hostname URL tidak valid")
+		return "", errors.New(
+			"hostname URL tidak valid",
+		)
 	}
 
-	if hostname == "localhost" || strings.HasSuffix(hostname, ".localhost") {
-		return "", errors.New("localhost tidak boleh dipindai")
+	if _, blocked := blockedHostnames[hostname]; blocked {
+		return "", errors.New(
+			"hostname tidak boleh dipindai",
+		)
+	}
+
+	if strings.HasSuffix(hostname, ".localhost") ||
+		strings.HasSuffix(hostname, ".local") {
+		return "", errors.New(
+			"hostname lokal tidak boleh dipindai",
+		)
 	}
 
 	addresses, err := resolveAddresses(ctx, hostname)
@@ -77,11 +112,13 @@ func ValidatePublicHTTPURL(ctx context.Context, rawURL string) (string, error) {
 	}
 
 	if len(addresses) == 0 {
-		return "", errors.New("hostname tidak menghasilkan alamat IP")
+		return "", errors.New(
+			"hostname tidak menghasilkan alamat IP",
+		)
 	}
 
 	for _, address := range addresses {
-		if isBlockedAddress(address) {
+		if IsBlockedAddress(address) {
 			return "", fmt.Errorf(
 				"hostname mengarah ke alamat IP yang tidak diizinkan: %s",
 				address.String(),
@@ -94,12 +131,39 @@ func ValidatePublicHTTPURL(ctx context.Context, rawURL string) (string, error) {
 	return parsedURL.String(), nil
 }
 
-func resolveAddresses(ctx context.Context, hostname string) ([]netip.Addr, error) {
+func ResolvePublicAddresses(
+	ctx context.Context,
+	hostname string,
+) ([]netip.Addr, error) {
+	addresses, err := resolveAddresses(ctx, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, address := range addresses {
+		if IsBlockedAddress(address) {
+			return nil, fmt.Errorf(
+				"alamat IP tidak diizinkan: %s",
+				address.String(),
+			)
+		}
+	}
+
+	return addresses, nil
+}
+
+func resolveAddresses(
+	ctx context.Context,
+	hostname string,
+) ([]netip.Addr, error) {
 	if address, err := netip.ParseAddr(hostname); err == nil {
 		return []netip.Addr{address}, nil
 	}
 
-	lookupContext, cancel := context.WithTimeout(ctx, 5*time.Second)
+	lookupContext, cancel := context.WithTimeout(
+		ctx,
+		5*time.Second,
+	)
 	defer cancel()
 
 	addresses, err := net.DefaultResolver.LookupNetIP(
@@ -108,20 +172,20 @@ func resolveAddresses(ctx context.Context, hostname string) ([]netip.Addr, error
 		hostname,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("gagal melakukan resolusi DNS: %w", err)
+		return nil, fmt.Errorf(
+			"gagal melakukan resolusi DNS: %w",
+			err,
+		)
 	}
 
 	return addresses, nil
 }
 
-func isBlockedAddress(address netip.Addr) bool {
+func IsBlockedAddress(address netip.Addr) bool {
 	address = address.Unmap()
 
-	if !address.IsValid() {
-		return true
-	}
-
-	if !address.IsGlobalUnicast() {
+	if !address.IsValid() ||
+		!address.IsGlobalUnicast() {
 		return true
 	}
 

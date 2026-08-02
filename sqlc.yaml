@@ -10,13 +10,8 @@ sql:
         out: "internal/database/db"
         sql_package: "pgx/v5"
         emit_json_tags: true
-        json_tags_case_style: "snake"
         emit_interface: true
         emit_empty_slices: true
-        emit_enum_valid_method: true
-        initialisms:
-          - "id"
-          - "url"
         overrides:
           - db_type: "uuid"
             go_type:

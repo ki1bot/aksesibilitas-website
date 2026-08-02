@@ -10,34 +10,50 @@ import (
 )
 
 type Config struct {
+	AppEnv            string
 	APIAddr           string
 	DatabaseURL       string
 	RedisAddr         string
 	RedisPassword     string
 	RedisDB           int
 	WebOrigin         string
+	SessionCookieName string
+	SessionTTL        time.Duration
 	ScanQueue         string
 	ScanTimeout       time.Duration
 	WorkerConcurrency int
+	ChromePath        string
 }
 
 func Load() (Config, error) {
 	loadEnvFile(".env")
 
 	cfg := Config{
+		AppEnv:            getString("APP_ENV", "development"),
 		APIAddr:           getString("API_ADDR", ":8080"),
 		DatabaseURL:       strings.TrimSpace(os.Getenv("DATABASE_URL")),
 		RedisAddr:         getString("REDIS_ADDR", "localhost:6379"),
 		RedisPassword:     os.Getenv("REDIS_PASSWORD"),
 		RedisDB:           getInt("REDIS_DB", 0),
 		WebOrigin:         getString("WEB_ORIGIN", "http://localhost:3000"),
+		SessionCookieName: getString("SESSION_COOKIE_NAME", "aksescheck_session"),
+		SessionTTL:        getDuration("SESSION_TTL", 7*24*time.Hour),
 		ScanQueue:         getString("SCAN_QUEUE", "scanner"),
 		ScanTimeout:       getDuration("SCAN_TIMEOUT", 60*time.Second),
 		WorkerConcurrency: getInt("WORKER_CONCURRENCY", 2),
+		ChromePath:        strings.TrimSpace(os.Getenv("CHROME_PATH")),
 	}
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL wajib diisi")
+	}
+
+	if cfg.SessionTTL < time.Hour {
+		return Config{}, errors.New("SESSION_TTL minimal satu jam")
+	}
+
+	if cfg.WorkerConcurrency < 1 {
+		return Config{}, errors.New("WORKER_CONCURRENCY minimal satu")
 	}
 
 	return cfg, nil
@@ -51,10 +67,8 @@ func loadEnvFile(path string) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -66,7 +80,6 @@ func loadEnvFile(path string) {
 
 		key = strings.TrimSpace(key)
 		value = strings.TrimSpace(value)
-
 		if key == "" {
 			continue
 		}
@@ -89,12 +102,11 @@ func loadEnvFile(path string) {
 	}
 }
 
-func getString(key string, fallback string) string {
+func getString(key, fallback string) string {
 	value := strings.TrimSpace(os.Getenv(key))
 	if value == "" {
 		return fallback
 	}
-
 	return value
 }
 
@@ -105,7 +117,7 @@ func getInt(key string, fallback int) int {
 	}
 
 	parsed, err := strconv.Atoi(value)
-	if err != nil || parsed < 0 {
+	if err != nil {
 		return fallback
 	}
 

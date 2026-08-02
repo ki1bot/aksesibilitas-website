@@ -1,12 +1,13 @@
 {
   "name": "aksescheck-id",
   "private": true,
+  "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "dev:web": "pnpm --filter web run dev",
-    "build:web": "pnpm --filter web run build",
-    "lint:web": "pnpm --filter web run lint",
-    "sync:axe": "cp node_modules/axe-core/axe.min.js embedded/axe.min.js",
-    "generate:api": "pnpm --filter web run generate:api",
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "lint:web": "pnpm --filter web lint",
+    "sync:axe": "node scripts/sync-axe.mjs",
+    "generate:api": "pnpm --filter web generate:api",
     "dev:api": "go run ./services/api/cmd/api",
     "dev:worker": "go run ./services/worker/cmd/worker",
     "generate:sql": "sqlc generate",
