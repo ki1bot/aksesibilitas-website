@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.17.0",
   "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names API,WORKER,WEB \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:web\"",
     "dev:web": "pnpm --filter web dev",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint",
@@ -23,6 +24,7 @@
     "test": "pnpm test:go"
   },
   "devDependencies": {
-    "axe-core": "^4.12.1"
+    "axe-core": "^4.12.1",
+    "concurrently": "^9.2.1"
   }
 }
