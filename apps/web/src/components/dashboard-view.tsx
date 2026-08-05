@@ -43,13 +43,17 @@ import {
 import { formatDate, truncate } from "@/lib/format";
 
 const projectSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  description: z.string().trim().max(1000),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Nama project minimal 2 karakter")
+    .max(120, "Nama project maksimal 120 karakter"),
+  description: z.string().trim().max(1000, "Deskripsi maksimal 1000 karakter"),
 });
 
 const scanSchema = z.object({
-  project_id: z.string().uuid(),
-  url: z.url("URL website tidak valid"),
+  project_id: z.string().uuid("Pilih project terlebih dahulu"),
+  url: z.url("Masukkan alamat website yang valid"),
 });
 
 export function DashboardView() {
@@ -80,65 +84,6 @@ export function DashboardView() {
   const scans = useMemo(() => scansQuery.data ?? [], [scansQuery.data]);
 
   const activeProjectID = selectedProject || projects[0]?.id || "";
-
-  const projectMutation = useMutation({
-    mutationFn: () => {
-      const parsed = projectSchema.safeParse({
-        name: projectName,
-        description: projectDescription,
-      });
-
-      if (!parsed.success) {
-        throw new Error(
-          parsed.error.issues[0]?.message ?? "Data project tidak valid",
-        );
-      }
-
-      return createProject(parsed.data);
-    },
-    onSuccess: async (project) => {
-      setProjectName("");
-      setProjectDescription("");
-      setProjectDialogOpen(false);
-      setSelectedProject(project.id);
-
-      await queryClient.invalidateQueries({
-        queryKey: ["projects"],
-      });
-
-      toast.success("Project berhasil dibuat");
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Gagal membuat project",
-      );
-    },
-  });
-
-  const scanMutation = useMutation({
-    mutationFn: () => {
-      const parsed = scanSchema.safeParse({
-        project_id: activeProjectID,
-        url: scanURL.trim(),
-      });
-
-      if (!parsed.success) {
-        throw new Error(
-          parsed.error.issues[0]?.message ?? "Data scan tidak valid",
-        );
-      }
-
-      return createScan(parsed.data);
-    },
-    onSuccess: (scan) => {
-      router.push(`/scans/${scan.id}`);
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Gagal membuat scan",
-      );
-    },
-  });
 
   const summary = useMemo(() => {
     return scans.reduce(
@@ -185,6 +130,67 @@ export function DashboardView() {
     },
   ];
 
+  const projectMutation = useMutation({
+    mutationFn: () => {
+      const parsed = projectSchema.safeParse({
+        name: projectName,
+        description: projectDescription,
+      });
+
+      if (!parsed.success) {
+        throw new Error(
+          parsed.error.issues[0]?.message ?? "Data project belum benar",
+        );
+      }
+
+      return createProject(parsed.data);
+    },
+    onSuccess: async (project) => {
+      setProjectName("");
+      setProjectDescription("");
+      setProjectDialogOpen(false);
+      setSelectedProject(project.id);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+
+      toast.success("Project berhasil dibuat");
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Project tidak dapat dibuat",
+      );
+    },
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: () => {
+      const parsed = scanSchema.safeParse({
+        project_id: activeProjectID,
+        url: scanURL.trim(),
+      });
+
+      if (!parsed.success) {
+        throw new Error(
+          parsed.error.issues[0]?.message ?? "Data pemeriksaan belum benar",
+        );
+      }
+
+      return createScan(parsed.data);
+    },
+    onSuccess: (scan) => {
+      router.push(`/scans/${scan.id}`);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Pemeriksaan tidak dapat dimulai",
+      );
+    },
+  });
+
   function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     projectMutation.mutate();
@@ -197,19 +203,19 @@ export function DashboardView() {
 
   return (
     <AppShell>
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
-            Ringkasan workspace
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+            Ringkasan akun
           </p>
 
           <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-            Dashboard aksesibilitas
+            Pemeriksaan website
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400 sm:text-base">
-            Jalankan audit satu halaman, pantau antrean worker, dan tindak
-            lanjuti pelanggaran yang ditemukan.
+            Tambahkan website, mulai pemeriksaan, lalu lanjutkan perbaikan dari
+            masalah yang paling penting.
           </p>
         </div>
 
@@ -219,24 +225,24 @@ export function DashboardView() {
           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
         >
           <Plus className="size-4" aria-hidden="true" />
-          Project baru
+          Tambah project
         </button>
       </section>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
-            label: "Total project",
+            label: "Project tersimpan",
             value: projects.length,
             icon: FolderKanban,
           },
           {
-            label: "Total scan",
+            label: "Total pemeriksaan",
             value: summary.total,
             icon: ScanSearch,
           },
           {
-            label: "Scan selesai",
+            label: "Pemeriksaan selesai",
             value: summary.completed,
             icon: Activity,
           },
@@ -253,7 +259,7 @@ export function DashboardView() {
               key={item.label}
               className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <span className="grid size-11 place-items-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
@@ -269,32 +275,34 @@ export function DashboardView() {
         })}
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
         <article className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-6 text-white shadow-xl sm:p-8">
-          <div className="absolute -right-16 -top-16 size-64 rounded-full bg-blue-600/30 blur-3xl" />
-          <div className="absolute -bottom-20 left-20 size-52 rounded-full bg-violet-600/20 blur-3xl" />
+          <div className="absolute -right-20 -top-20 size-72 rounded-full bg-blue-600/30 blur-3xl" />
+          <div className="absolute -bottom-24 left-20 size-56 rounded-full bg-violet-600/20 blur-3xl" />
 
           <div className="relative">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-blue-200">
               <Globe2 className="size-3.5" aria-hidden="true" />
-              Single-page audit
+              Periksa satu halaman
             </span>
 
             <h2 className="mt-5 text-2xl font-black tracking-tight">
-              Mulai pemindaian baru
+              Mulai pemeriksaan baru
             </h2>
 
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-              URL akan divalidasi sebelum dimasukkan ke Redis. Worker membuka
-              halaman melalui Chromium dan menjalankan axe-core.
+              Pilih project dan masukkan alamat halaman publik yang ingin
+              diperiksa.
             </p>
 
             <form
               onSubmit={submitScan}
-              className="mt-7 grid gap-4 sm:grid-cols-[0.8fr_1.2fr_auto]"
+              className="mt-7 grid gap-4 lg:grid-cols-[0.8fr_1.2fr_auto]"
             >
               <label>
-                <span className="sr-only">Project</span>
+                <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Project
+                </span>
 
                 <select
                   value={activeProjectID}
@@ -319,7 +327,9 @@ export function DashboardView() {
               </label>
 
               <label>
-                <span className="sr-only">URL website</span>
+                <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Alamat halaman
+                </span>
 
                 <input
                   type="url"
@@ -327,7 +337,7 @@ export function DashboardView() {
                   onChange={(event) => setScanURL(event.target.value)}
                   required
                   maxLength={2048}
-                  placeholder="https://example.com"
+                  placeholder="https://websiteanda.id/halaman"
                   className="h-12 w-full rounded-xl border border-white/10 bg-white/10 px-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
                 />
               </label>
@@ -335,9 +345,9 @@ export function DashboardView() {
               <button
                 type="submit"
                 disabled={scanMutation.isPending || projects.length === 0}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-12 items-center justify-center gap-2 self-end rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {scanMutation.isPending ? "Mengirim..." : "Mulai scan"}
+                {scanMutation.isPending ? "Memulai..." : "Mulai periksa"}
 
                 {!scanMutation.isPending && (
                   <ArrowRight className="size-4" aria-hidden="true" />
@@ -347,19 +357,19 @@ export function DashboardView() {
 
             {projects.length === 0 && !projectsQuery.isPending && (
               <p className="mt-4 text-sm font-medium text-amber-300">
-                Buat project terlebih dahulu sebelum menjalankan scan.
+                Tambahkan project terlebih dahulu sebelum memulai pemeriksaan.
               </p>
             )}
           </div>
         </article>
 
         <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="font-black">Distribusi dampak</h2>
+              <h2 className="font-black">Masalah berdasarkan dampak</h2>
 
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Akumulasi dari 30 scan terbaru
+                Diambil dari 30 pemeriksaan terbaru
               </p>
             </div>
 
@@ -427,7 +437,7 @@ export function DashboardView() {
             <h2 className="text-xl font-black">Project Anda</h2>
 
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Kelompokkan audit berdasarkan aplikasi atau website.
+              Pisahkan pemeriksaan berdasarkan website atau aplikasi.
             </p>
           </div>
         </div>
@@ -440,13 +450,13 @@ export function DashboardView() {
               message={
                 projectsQuery.error instanceof Error
                   ? projectsQuery.error.message
-                  : "Gagal mengambil project"
+                  : "Project tidak dapat dimuat"
               }
             />
           ) : projects.length === 0 ? (
             <EmptyState
               title="Belum ada project"
-              description="Buat project pertama agar scan dan laporan memiliki ruang kerja yang jelas."
+              description="Tambahkan project pertama agar hasil pemeriksaan tersusun dengan rapi."
             />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -470,7 +480,7 @@ export function DashboardView() {
                   <h3 className="mt-5 font-black">{project.name}</h3>
 
                   <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                    {project.description || "Tidak ada deskripsi project."}
+                    {project.description || "Belum ada deskripsi."}
                   </p>
 
                   <p className="mt-5 text-xs font-medium text-slate-400">
@@ -490,32 +500,32 @@ export function DashboardView() {
           </span>
 
           <div>
-            <h2 className="text-xl font-black">Histori terbaru</h2>
+            <h2 className="text-xl font-black">Riwayat terbaru</h2>
 
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Maksimal 30 pemindaian terakhir
+              Menampilkan maksimal 30 pemeriksaan terakhir
             </p>
           </div>
         </div>
 
         <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
           {scansQuery.isPending ? (
-            <LoadingState label="Memuat histori scan" />
+            <LoadingState label="Memuat riwayat pemeriksaan" />
           ) : scansQuery.error ? (
             <div className="p-5">
               <ErrorState
                 message={
                   scansQuery.error instanceof Error
                     ? scansQuery.error.message
-                    : "Gagal mengambil histori"
+                    : "Riwayat tidak dapat dimuat"
                 }
               />
             </div>
           ) : scans.length === 0 ? (
             <div className="p-5">
               <EmptyState
-                title="Belum ada histori scan"
-                description="Jalankan pemindaian pertama untuk melihat status dan hasilnya di sini."
+                title="Belum ada riwayat"
+                description="Mulai pemeriksaan pertama untuk melihat hasilnya di sini."
               />
             </div>
           ) : (
@@ -571,22 +581,22 @@ export function DashboardView() {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
-                  Workspace baru
+                <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+                  Project baru
                 </p>
 
                 <h2
                   id="project-dialog-title"
                   className="mt-2 text-2xl font-black"
                 >
-                  Buat project
+                  Tambahkan website atau aplikasi
                 </h2>
               </div>
 
               <button
                 type="button"
                 onClick={() => setProjectDialogOpen(false)}
-                className="grid size-10 place-items-center rounded-xl border border-slate-200 dark:border-white/10"
+                className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 dark:border-white/10"
                 aria-label="Tutup dialog"
               >
                 <X className="size-5" aria-hidden="true" />
@@ -606,8 +616,8 @@ export function DashboardView() {
                   minLength={2}
                   maxLength={120}
                   required
-                  placeholder="Website portofolio"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                  placeholder="Contoh: Website portofolio"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                 />
               </label>
 
@@ -621,17 +631,19 @@ export function DashboardView() {
                   }
                   maxLength={1000}
                   rows={4}
-                  placeholder="Audit aksesibilitas untuk website portofolio pribadi."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                  placeholder="Jelaskan website atau tujuan pemeriksaannya."
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={projectMutation.isPending}
-                className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {projectMutation.isPending ? "Menyimpan..." : "Simpan project"}
+                {projectMutation.isPending
+                  ? "Sedang menyimpan..."
+                  : "Simpan project"}
               </button>
             </form>
           </div>

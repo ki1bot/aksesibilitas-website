@@ -9,9 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/ki1bot/aksesibilitas-website/internal/account"
 	"github.com/ki1bot/aksesibilitas-website/internal/config"
 	"github.com/ki1bot/aksesibilitas-website/internal/database"
 	"github.com/ki1bot/aksesibilitas-website/internal/httpapi"
@@ -48,11 +50,10 @@ func main() {
 	)
 	defer redisClient.Close()
 
-	pingContext, cancelPing :=
-		context.WithTimeout(
-			ctx,
-			5*time.Second,
-		)
+	pingContext, cancelPing := context.WithTimeout(
+		ctx,
+		5*time.Second,
+	)
 
 	if err := redisClient.Ping(
 		pingContext,
@@ -76,14 +77,53 @@ func main() {
 	)
 	defer queueClient.Close()
 
+	baseRouter := httpapi.NewRouter(
+		cfg,
+		pool,
+		redisClient,
+		queueClient,
+	)
+
+	passwordHandler := account.NewHandler(
+		cfg,
+		pool,
+		redisClient,
+	)
+
+	router := chi.NewRouter()
+
+	for _, path := range []string{
+		"/api/v1/auth/forgot-password",
+		"/api/v1/auth/reset-password",
+		"/api/v1/auth/change-password",
+	} {
+		router.Options(
+			path,
+			passwordHandler.Options,
+		)
+	}
+
+	router.Post(
+		"/api/v1/auth/forgot-password",
+		passwordHandler.ForgotPassword,
+	)
+
+	router.Post(
+		"/api/v1/auth/reset-password",
+		passwordHandler.ResetPassword,
+	)
+
+	router.Post(
+		"/api/v1/auth/change-password",
+		passwordHandler.ChangePassword,
+	)
+
+	router.NotFound(baseRouter.ServeHTTP)
+	router.MethodNotAllowed(baseRouter.ServeHTTP)
+
 	server := &http.Server{
-		Addr: cfg.APIAddr,
-		Handler: httpapi.NewRouter(
-			cfg,
-			pool,
-			redisClient,
-			queueClient,
-		),
+		Addr:              cfg.APIAddr,
+		Handler:           router,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      90 * time.Second,

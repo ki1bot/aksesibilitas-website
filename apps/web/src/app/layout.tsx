@@ -21,13 +21,13 @@ export const metadata: Metadata = {
     template: "%s | AksesCheck ID",
   },
   description:
-    "Platform pemeriksaan aksesibilitas website menggunakan Go, chromedp, axe-core, dan WCAG 2.2.",
+    "Periksa aksesibilitas website, pahami masalahnya, dan tentukan bagian yang perlu diperbaiki lebih dulu.",
   applicationName: "AksesCheck ID",
   keywords: [
-    "aksesibilitas",
+    "aksesibilitas website",
     "WCAG",
-    "axe-core",
-    "website scanner",
+    "pemeriksaan website",
+    "aksesibilitas digital",
     "accessibility audit",
   ],
 };

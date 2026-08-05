@@ -19,6 +19,13 @@ type Config struct {
 	WebOrigin         string
 	SessionCookieName string
 	SessionTTL        time.Duration
+	PasswordResetTTL  time.Duration
+	SMTPHost          string
+	SMTPPort          int
+	SMTPUsername      string
+	SMTPPassword      string
+	SMTPFromName      string
+	SMTPFromEmail     string
 	ScanQueue         string
 	ScanTimeout       time.Duration
 	WorkerConcurrency int
@@ -38,10 +45,21 @@ func Load() (Config, error) {
 		WebOrigin:         getString("WEB_ORIGIN", "http://localhost:3000"),
 		SessionCookieName: getString("SESSION_COOKIE_NAME", "aksescheck_session"),
 		SessionTTL:        getDuration("SESSION_TTL", 7*24*time.Hour),
+		PasswordResetTTL:  getDuration("PASSWORD_RESET_TTL", 30*time.Minute),
+		SMTPHost:          strings.TrimSpace(os.Getenv("SMTP_HOST")),
+		SMTPPort:          getInt("SMTP_PORT", 587),
+		SMTPUsername:      strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
+		SMTPPassword:      os.Getenv("SMTP_PASSWORD"),
+		SMTPFromName:      getString("SMTP_FROM_NAME", "AksesCheck ID"),
+		SMTPFromEmail:     strings.TrimSpace(os.Getenv("SMTP_FROM_EMAIL")),
 		ScanQueue:         getString("SCAN_QUEUE", "scanner"),
 		ScanTimeout:       getDuration("SCAN_TIMEOUT", 60*time.Second),
 		WorkerConcurrency: getInt("WORKER_CONCURRENCY", 2),
 		ChromePath:        strings.TrimSpace(os.Getenv("CHROME_PATH")),
+	}
+
+	if cfg.SMTPFromEmail == "" {
+		cfg.SMTPFromEmail = cfg.SMTPUsername
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -50,6 +68,17 @@ func Load() (Config, error) {
 
 	if cfg.SessionTTL < time.Hour {
 		return Config{}, errors.New("SESSION_TTL minimal satu jam")
+	}
+
+	if cfg.PasswordResetTTL < 10*time.Minute ||
+		cfg.PasswordResetTTL > 24*time.Hour {
+		return Config{}, errors.New(
+			"PASSWORD_RESET_TTL harus antara 10 menit dan 24 jam",
+		)
+	}
+
+	if cfg.SMTPPort < 1 || cfg.SMTPPort > 65535 {
+		return Config{}, errors.New("SMTP_PORT tidak valid")
 	}
 
 	if cfg.WorkerConcurrency < 1 {
@@ -89,11 +118,13 @@ func loadEnvFile(path string) {
 		}
 
 		if len(value) >= 2 {
-			if strings.HasPrefix(value, `"`) && strings.HasSuffix(value, `"`) {
+			if strings.HasPrefix(value, `"`) &&
+				strings.HasSuffix(value, `"`) {
 				if unquoted, unquoteErr := strconv.Unquote(value); unquoteErr == nil {
 					value = unquoted
 				}
-			} else if strings.HasPrefix(value, "'") && strings.HasSuffix(value, "'") {
+			} else if strings.HasPrefix(value, "'") &&
+				strings.HasSuffix(value, "'") {
 				value = value[1 : len(value)-1]
 			}
 		}
@@ -107,6 +138,7 @@ func getString(key, fallback string) string {
 	if value == "" {
 		return fallback
 	}
+
 	return value
 }
 
