@@ -113,7 +113,7 @@ export default function Home() {
       </header>
 
       <section className="relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(37,99,235,0.14),transparent_26%),radial-gradient(circle_at_85%_70%,rgba(124,58,237,0.12),transparent_28%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(13,148,136,0.16),transparent_26%),radial-gradient(circle_at_85%_70%,rgba(217,70,239,0.12),transparent_28%)]" />
         <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative mx-auto grid max-w-7xl gap-14 px-4 py-20 sm:px-6 sm:py-28 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:px-8 lg:py-36">
@@ -193,7 +193,7 @@ export default function Home() {
                   className="grid size-32 place-items-center rounded-full"
                   style={{
                     background:
-                      "conic-gradient(#2563eb 86%, rgba(255,255,255,0.08) 86%)",
+                      "conic-gradient(var(--score-color) 86%, rgba(255,253,250,0.08) 86%)",
                   }}
                 >
                   <div className="grid size-24 place-items-center rounded-full bg-slate-950">
@@ -250,9 +250,11 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
               Fitur MVP
             </p>
+
             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
               Bukan sekadar angka skor.
             </h2>
+
             <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-400">
               Setiap temuan menyediakan konteks teknis agar developer dapat
               memahami masalah dan memperbaikinya.

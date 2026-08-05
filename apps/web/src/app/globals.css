@@ -23,8 +23,97 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-white: #fffdfa;
+  --color-black: #090806;
+
+  --color-slate-50: #faf9f7;
+  --color-slate-100: #f4f1ed;
+  --color-slate-200: #e7e1da;
+  --color-slate-300: #d4cbc1;
+  --color-slate-400: #a99d91;
+  --color-slate-500: #776c62;
+  --color-slate-600: #5b5148;
+  --color-slate-700: #443c35;
+  --color-slate-800: #2d2722;
+  --color-slate-900: #1c1815;
+  --color-slate-950: #0d0b09;
+
+  --color-blue-50: #ecfdfb;
+  --color-blue-100: #ccfbf1;
+  --color-blue-200: #99f6e4;
+  --color-blue-300: #5eead4;
+  --color-blue-400: #2dd4bf;
+  --color-blue-500: #0d9488;
+  --color-blue-600: #0f766e;
+  --color-blue-700: #115e59;
+  --color-blue-800: #134e4a;
+  --color-blue-900: #042f2e;
+  --color-blue-950: #022c22;
+
+  --color-emerald-50: #f7fee7;
+  --color-emerald-100: #ecfccb;
+  --color-emerald-200: #d9f99d;
+  --color-emerald-300: #bef264;
+  --color-emerald-400: #a3e635;
+  --color-emerald-500: #84cc16;
+  --color-emerald-600: #4d7c0f;
+  --color-emerald-700: #3f6212;
+  --color-emerald-800: #365314;
+  --color-emerald-900: #1a2e05;
+  --color-emerald-950: #0f1b04;
+
+  --color-red-50: #fff1f2;
+  --color-red-100: #ffe4e6;
+  --color-red-200: #fecdd3;
+  --color-red-300: #fda4af;
+  --color-red-400: #fb7185;
+  --color-red-500: #f43f5e;
+  --color-red-600: #e11d48;
+  --color-red-700: #be123c;
+  --color-red-800: #9f1239;
+  --color-red-900: #881337;
+  --color-red-950: #4c0519;
+
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #c2410c;
+  --color-orange-700: #9a3412;
+  --color-orange-800: #7c2d12;
+  --color-orange-900: #431407;
+  --color-orange-950: #2c0b03;
+
+  --color-amber-50: #fefce8;
+  --color-amber-100: #fef9c3;
+  --color-amber-200: #fef08a;
+  --color-amber-300: #fde047;
+  --color-amber-400: #facc15;
+  --color-amber-500: #eab308;
+  --color-amber-600: #a16207;
+  --color-amber-700: #854d0e;
+  --color-amber-800: #713f12;
+  --color-amber-900: #422006;
+  --color-amber-950: #2b1200;
+
+  --color-violet-50: #fdf4ff;
+  --color-violet-100: #fae8ff;
+  --color-violet-200: #f5d0fe;
+  --color-violet-300: #f0abfc;
+  --color-violet-400: #e879f9;
+  --color-violet-500: #d946ef;
+  --color-violet-600: #a21caf;
+  --color-violet-700: #86198f;
+  --color-violet-800: #701a75;
+  --color-violet-900: #4a044e;
+  --color-violet-950: #2e0233;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -34,59 +123,59 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0.025 264);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0.025 264);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0.025 264);
-  --primary: oklch(0.55 0.22 262);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.97 0.01 260);
-  --secondary-foreground: oklch(0.2 0.025 264);
-  --muted: oklch(0.97 0.01 260);
-  --muted-foreground: oklch(0.52 0.025 264);
-  --accent: oklch(0.95 0.03 260);
-  --accent-foreground: oklch(0.25 0.05 262);
-  --destructive: oklch(0.58 0.23 28);
-  --border: oklch(0.91 0.012 260);
-  --input: oklch(0.91 0.012 260);
-  --ring: oklch(0.62 0.2 262);
-  --score-color: #2563eb;
-  --score-track: #e2e8f0;
-  --chart-accent: #2563eb;
-  --chart-grid: #e2e8f0;
-  --chart-label: #64748b;
-  --chart-hover: rgba(37, 99, 235, 0.06);
-  --chart-tooltip: #ffffff;
+  --background: #fffdfa;
+  --foreground: #1c1815;
+  --card: #fffefa;
+  --card-foreground: #1c1815;
+  --popover: #fffefa;
+  --popover-foreground: #1c1815;
+  --primary: #0f766e;
+  --primary-foreground: #fffdfa;
+  --secondary: #f4f1ed;
+  --secondary-foreground: #2d2722;
+  --muted: #f4f1ed;
+  --muted-foreground: #5b5148;
+  --accent: #ccfbf1;
+  --accent-foreground: #134e4a;
+  --destructive: #e11d48;
+  --border: #ddd5cc;
+  --input: #d4cbc1;
+  --ring: #0f766e;
+  --score-color: #0f766e;
+  --score-track: #e7e1da;
+  --chart-accent: #0f766e;
+  --chart-grid: #e7e1da;
+  --chart-label: #776c62;
+  --chart-hover: rgba(15, 118, 110, 0.08);
+  --chart-tooltip: #fffdfa;
 }
 
 .dark {
-  --background: oklch(0.13 0.025 264);
-  --foreground: oklch(0.98 0.005 260);
-  --card: oklch(0.18 0.025 264);
-  --card-foreground: oklch(0.98 0.005 260);
-  --popover: oklch(0.18 0.025 264);
-  --popover-foreground: oklch(0.98 0.005 260);
-  --primary: oklch(0.65 0.19 260);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.23 0.025 264);
-  --secondary-foreground: oklch(0.98 0.005 260);
-  --muted: oklch(0.23 0.025 264);
-  --muted-foreground: oklch(0.72 0.025 260);
-  --accent: oklch(0.25 0.04 262);
-  --accent-foreground: oklch(0.98 0.005 260);
-  --destructive: oklch(0.68 0.2 25);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.68 0.18 260);
-  --score-color: #3b82f6;
-  --score-track: rgba(255, 255, 255, 0.1);
-  --chart-accent: #3b82f6;
-  --chart-grid: rgba(255, 255, 255, 0.1);
-  --chart-label: #94a3b8;
-  --chart-hover: rgba(59, 130, 246, 0.08);
-  --chart-tooltip: #0f172a;
+  --background: #0d0b09;
+  --foreground: #faf9f7;
+  --card: #1c1815;
+  --card-foreground: #faf9f7;
+  --popover: #1c1815;
+  --popover-foreground: #faf9f7;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #2d2722;
+  --secondary-foreground: #faf9f7;
+  --muted: #2d2722;
+  --muted-foreground: #a99d91;
+  --accent: #134e4a;
+  --accent-foreground: #ecfdfb;
+  --destructive: #fb7185;
+  --border: rgba(255, 253, 250, 0.12);
+  --input: rgba(255, 253, 250, 0.16);
+  --ring: #2dd4bf;
+  --score-color: #2dd4bf;
+  --score-track: rgba(255, 253, 250, 0.12);
+  --chart-accent: #2dd4bf;
+  --chart-grid: rgba(255, 253, 250, 0.12);
+  --chart-label: #a99d91;
+  --chart-hover: rgba(45, 212, 191, 0.1);
+  --chart-tooltip: #1c1815;
 }
 
 * {
@@ -118,7 +207,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid color-mix(in srgb, #2563eb 28%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--ring) 38%, transparent);
 }
 
 button:not(:disabled),
@@ -127,7 +216,7 @@ select:not(:disabled) {
 }
 
 ::selection {
-  background: rgba(37, 99, 235, 0.22);
+  background: color-mix(in srgb, var(--primary) 24%, transparent);
 }
 
 @keyframes scan-progress {

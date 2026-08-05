@@ -100,7 +100,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(37,99,235,0.32),transparent_28%),radial-gradient(circle_at_85%_80%,rgba(124,58,237,0.24),transparent_30%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(13,148,136,0.34),transparent_28%),radial-gradient(circle_at_85%_80%,rgba(217,70,239,0.24),transparent_30%)]" />
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.05fr_0.95fr]">
         <section className="hidden flex-col justify-between px-12 py-10 lg:flex">
