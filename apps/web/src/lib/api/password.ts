@@ -7,7 +7,6 @@ type ErrorPayload = {
 
 export type ForgotPasswordResponse = {
   message: string;
-  debug_reset_url?: string;
 };
 
 async function readPayload(response: Response): Promise<unknown> {

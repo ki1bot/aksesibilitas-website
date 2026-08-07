@@ -110,7 +110,6 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState("");
   const [message, setMessage] = useState("");
-  const [debugResetURL, setDebugResetURL] = useState("");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -128,12 +127,10 @@ export function ForgotPasswordForm() {
     onSuccess: (result) => {
       setFormError("");
       setMessage(result.message);
-      setDebugResetURL(result.debug_reset_url ?? "");
     },
 
     onError: (error) => {
       setMessage("");
-      setDebugResetURL("");
 
       setFormError(
         error instanceof Error
@@ -174,32 +171,10 @@ export function ForgotPasswordForm() {
             <p className="mt-2 text-sm leading-6">{message}</p>
           </div>
 
-          {debugResetURL && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-400/20 dark:bg-amber-400/10">
-              <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
-                Mode pengembangan
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-amber-800 dark:text-amber-300">
-                SMTP belum diperlukan saat pengembangan. Gunakan tautan berikut
-                untuk menguji halaman reset password.
-              </p>
-
-              <Link
-                href={debugResetURL}
-                className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline dark:text-blue-300"
-              >
-                Buka halaman reset password
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-          )}
-
           <button
             type="button"
             onClick={() => {
               setMessage("");
-              setDebugResetURL("");
             }}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
           >
