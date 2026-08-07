@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type UpdateUserProfileParams struct {
+	ID    uuid.UUID
+	Name  string
+	Email string
+}
+
 func (queries *Queries) CreateUser(
 	ctx context.Context,
 	params CreateUserParams,
@@ -80,6 +86,35 @@ func (queries *Queries) GetUserByEmail(
 			LIMIT 1
 		`,
 		email,
+	)
+
+	return scanUser(row)
+}
+
+func (queries *Queries) UpdateUserProfile(
+	ctx context.Context,
+	params UpdateUserProfileParams,
+) (User, error) {
+	row := queries.db.QueryRow(
+		ctx,
+		`
+			UPDATE users
+			SET
+				name = $2,
+				email = LOWER($3),
+				updated_at = NOW()
+			WHERE id = $1
+			RETURNING
+				id,
+				name,
+				email,
+				password_hash,
+				created_at,
+				updated_at
+		`,
+		params.ID,
+		params.Name,
+		params.Email,
 	)
 
 	return scanUser(row)

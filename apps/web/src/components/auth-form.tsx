@@ -23,25 +23,32 @@ import {
   registerAccount,
 } from "@/lib/api/services";
 
+const passwordSchema = z
+  .string()
+  .min(8, "Password minimal 8 karakter")
+  .max(72, "Password maksimal 72 karakter")
+  .regex(/^[A-Za-z0-9]+$/, "Password hanya boleh berisi huruf dan angka");
+
 const loginSchema = z.object({
   email: z.email("Masukkan alamat email yang valid"),
   password: z.string().min(1, "Password belum diisi"),
 });
 
-const registerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Nama minimal 2 karakter")
-    .max(100, "Nama maksimal 100 karakter"),
-
-  email: z.email("Masukkan alamat email yang valid"),
-
-  password: z
-    .string()
-    .min(10, "Password minimal 10 karakter")
-    .max(72, "Password maksimal 72 karakter"),
-});
+const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Nama minimal 2 karakter")
+      .max(100, "Nama maksimal 100 karakter"),
+    email: z.email("Masukkan alamat email yang valid"),
+    password: passwordSchema,
+    passwordConfirmation: z.string().min(1, "Konfirmasi password belum diisi"),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Konfirmasi password tidak sama",
+    path: ["passwordConfirmation"],
+  });
 
 function getSafeReturnPath() {
   if (typeof window === "undefined") {
@@ -49,7 +56,6 @@ function getSafeReturnPath() {
   }
 
   const searchParams = new URLSearchParams(window.location.search);
-
   const candidate = searchParams.get("next")?.trim() ?? "";
 
   if (
@@ -68,19 +74,15 @@ function getSafeReturnPath() {
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
-
   const queryClient = useQueryClient();
-
   const registerMode = mode === "register";
 
   const [name, setName] = useState("");
-
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
-
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
   const [formError, setFormError] = useState("");
 
   const sessionQuery = useQuery({
@@ -109,6 +111,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           name: name.trim(),
           email: normalizedEmail,
           password,
+          passwordConfirmation,
         });
 
         if (!parsed.success) {
@@ -117,7 +120,11 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           );
         }
 
-        return registerAccount(parsed.data);
+        return registerAccount({
+          name: parsed.data.name,
+          email: parsed.data.email,
+          password: parsed.data.password,
+        });
       }
 
       const parsed = loginSchema.safeParse({
@@ -155,7 +162,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           : "Permintaan tidak dapat diproses";
 
       setFormError(message);
-
       toast.error(message);
     },
   });
@@ -168,7 +174,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     }
 
     setFormError("");
-
     mutation.mutate();
   }
 
@@ -307,11 +312,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete={registerMode ? "new-password" : "current-password"}
               required
-              minLength={registerMode ? 10 : 1}
+              minLength={registerMode ? 8 : 1}
               maxLength={72}
+              pattern={registerMode ? "[A-Za-z0-9]+" : undefined}
               disabled={mutation.isPending}
               placeholder={
-                registerMode ? "Minimal 10 karakter" : "Masukkan password"
+                registerMode ? "Minimal 8 karakter" : "Masukkan password"
               }
               className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5"
             />
@@ -335,9 +341,58 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         </label>
 
         {registerMode && (
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold">
+              Konfirmasi password
+            </span>
+
+            <span className="relative block">
+              <LockKeyhole
+                className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+
+              <input
+                type={confirmationVisible ? "text" : "password"}
+                value={passwordConfirmation}
+                onChange={(event) =>
+                  setPasswordConfirmation(event.target.value)
+                }
+                autoComplete="new-password"
+                required
+                minLength={8}
+                maxLength={72}
+                pattern="[A-Za-z0-9]+"
+                disabled={mutation.isPending}
+                placeholder="Ketik ulang password"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5"
+              />
+
+              <button
+                type="button"
+                onClick={() => setConfirmationVisible((value) => !value)}
+                disabled={mutation.isPending}
+                className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/5"
+                aria-label={
+                  confirmationVisible
+                    ? "Sembunyikan konfirmasi password"
+                    : "Tampilkan konfirmasi password"
+                }
+              >
+                {confirmationVisible ? (
+                  <EyeOff className="size-4.5" aria-hidden="true" />
+                ) : (
+                  <Eye className="size-4.5" aria-hidden="true" />
+                )}
+              </button>
+            </span>
+          </label>
+        )}
+
+        {registerMode && (
           <p className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 dark:bg-white/5 dark:text-slate-400">
-            Gunakan minimal 10 karakter. Hindari memakai password yang sama
-            dengan akun lain.
+            Password minimal 8 karakter dan hanya boleh menggunakan huruf atau
+            angka.
           </p>
         )}
 

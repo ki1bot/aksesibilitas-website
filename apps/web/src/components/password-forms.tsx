@@ -30,8 +30,9 @@ const emailSchema = z.email("Masukkan alamat email yang valid");
 
 const newPasswordSchema = z
   .string()
-  .min(10, "Password minimal 10 karakter")
-  .max(72, "Password maksimal 72 karakter");
+  .min(8, "Password minimal 8 karakter")
+  .max(72, "Password maksimal 72 karakter")
+  .regex(/^[A-Za-z0-9]+$/, "Password hanya boleh berisi huruf dan angka");
 
 function PasswordInput({
   label,
@@ -39,12 +40,14 @@ function PasswordInput({
   onChange,
   autoComplete,
   placeholder,
+  enforceNewPasswordPolicy = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   autoComplete: string;
   placeholder: string;
+  enforceNewPasswordPolicy?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -64,7 +67,9 @@ function PasswordInput({
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
           required
+          minLength={enforceNewPasswordPolicy ? 8 : 1}
           maxLength={72}
+          pattern={enforceNewPasswordPolicy ? "[A-Za-z0-9]+" : undefined}
           placeholder={placeholder}
           className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
         />
@@ -119,14 +124,17 @@ export function ForgotPasswordForm() {
         email: parsed.data,
       });
     },
+
     onSuccess: (result) => {
       setFormError("");
       setMessage(result.message);
       setDebugResetURL(result.debug_reset_url ?? "");
     },
+
     onError: (error) => {
       setMessage("");
       setDebugResetURL("");
+
       setFormError(
         error instanceof Error
           ? error.message
@@ -273,10 +281,12 @@ export function ResetPasswordForm() {
         password_confirmation: confirmation,
       });
     },
+
     onSuccess: () => {
       setFormError("");
       setCompleted(true);
     },
+
     onError: (error) => {
       setFormError(
         error instanceof Error ? error.message : "Password tidak dapat diubah",
@@ -297,7 +307,7 @@ export function ResetPasswordForm() {
       description={
         completed
           ? "Semua sesi lama sudah dikeluarkan agar akun Anda tetap aman."
-          : "Gunakan password baru yang berbeda dari password yang pernah digunakan sebelumnya."
+          : "Gunakan password baru minimal 8 karakter yang hanya berisi huruf atau angka."
       }
       footer={
         <Link
@@ -334,7 +344,8 @@ export function ResetPasswordForm() {
             value={password}
             onChange={setPassword}
             autoComplete="new-password"
-            placeholder="Minimal 10 karakter"
+            placeholder="Minimal 8 karakter"
+            enforceNewPasswordPolicy
           />
 
           <PasswordInput
@@ -343,9 +354,11 @@ export function ResetPasswordForm() {
             onChange={setConfirmation}
             autoComplete="new-password"
             placeholder="Ketik ulang password baru"
+            enforceNewPasswordPolicy
           />
 
           <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 dark:bg-white/5 dark:text-slate-400">
+            Password minimal 8 karakter dan hanya boleh berisi huruf atau angka.
             Setelah password diubah, semua perangkat yang masih login akan
             otomatis dikeluarkan.
           </div>
@@ -420,6 +433,7 @@ export function ChangePasswordView() {
         password_confirmation: confirmation,
       });
     },
+
     onSuccess: () => {
       queryClient.clear();
 
@@ -428,6 +442,7 @@ export function ChangePasswordView() {
       router.replace("/login");
       router.refresh();
     },
+
     onError: (error) => {
       setFormError(
         error instanceof Error ? error.message : "Password tidak dapat diubah",
@@ -484,7 +499,8 @@ export function ChangePasswordView() {
               value={newPassword}
               onChange={setNewPassword}
               autoComplete="new-password"
-              placeholder="Minimal 10 karakter"
+              placeholder="Minimal 8 karakter"
+              enforceNewPasswordPolicy
             />
 
             <PasswordInput
@@ -493,13 +509,14 @@ export function ChangePasswordView() {
               onChange={setConfirmation}
               autoComplete="new-password"
               placeholder="Ketik ulang password baru"
+              enforceNewPasswordPolicy
             />
 
             <FormError message={formError} />
 
             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
               <Link
-                href="/dashboard"
+                href="/profile"
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
               >
                 Batal
@@ -525,14 +542,15 @@ export function ChangePasswordView() {
               aria-hidden="true"
             />
 
-            <h2 className="mt-4 font-black">Password yang lebih aman</h2>
+            <h2 className="mt-4 font-black">Ketentuan password</h2>
 
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
-              <li>Gunakan minimal 10 karakter.</li>
-              <li>Jangan gunakan password yang sama dengan akun lain.</li>
+              <li>Gunakan minimal 8 karakter.</li>
+              <li>Password hanya boleh berisi huruf atau angka.</li>
               <li>
-                Hindari nama, tanggal lahir, atau informasi yang mudah ditebak.
+                Huruf dan angka boleh digunakan sendiri atau dikombinasikan.
               </li>
+              <li>Jangan gunakan password yang mudah ditebak.</li>
             </ul>
           </aside>
         </div>

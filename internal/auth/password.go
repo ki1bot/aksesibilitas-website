@@ -2,18 +2,24 @@ package auth
 
 import (
 	"errors"
-	"unicode/utf8"
+	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+var passwordPattern = regexp.MustCompile(`^[A-Za-z0-9]+$`)
+
 func HashPassword(password string) (string, error) {
-	if utf8.RuneCountInString(password) < 10 {
-		return "", errors.New("password minimal 10 karakter")
+	if len(password) < 8 {
+		return "", errors.New("password minimal 8 karakter")
 	}
 
 	if len(password) > 72 {
-		return "", errors.New("password maksimal 72 byte")
+		return "", errors.New("password maksimal 72 karakter")
+	}
+
+	if !passwordPattern.MatchString(password) {
+		return "", errors.New("password hanya boleh berisi huruf dan angka")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword(

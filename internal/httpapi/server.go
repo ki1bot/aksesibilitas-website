@@ -199,6 +199,11 @@ func NewRouter(
 						server.me,
 					)
 
+					router.Patch(
+						"/auth/me",
+						server.updateProfile,
+					)
+
 					router.Post(
 						"/auth/logout",
 						server.logout,
