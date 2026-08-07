@@ -30,6 +30,14 @@ const nextExecutable = resolve(
   "next",
 );
 
+const developmentEnvironment = {
+  ...process.env,
+  API_ADDR: "127.0.0.1:8080",
+  WEB_ORIGIN: "http://127.0.0.1:3000",
+  NEXT_PUBLIC_API_URL: "http://127.0.0.1:8080/api/v1",
+  NEXT_PUBLIC_CSRF_COOKIE_NAME: "aksesibilitaswebsite_session_csrf",
+};
+
 mkdirSync(temporaryDirectory, {
   recursive: true,
 });
@@ -41,6 +49,7 @@ function build(name, output, packagePath) {
     cwd: rootDirectory,
     stdio: "inherit",
     shell: false,
+    env: developmentEnvironment,
   });
 
   if (result.error) {
@@ -69,6 +78,7 @@ function startProcess(name, command, args) {
     stdio: "inherit",
     shell: false,
     windowsHide: false,
+    env: developmentEnvironment,
   });
 
   processes.set(name, child);

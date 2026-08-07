@@ -3,7 +3,7 @@ import createClient from "openapi-fetch";
 import type { paths } from "@/lib/api/schema";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080/api/v1";
 
 export const CSRF_COOKIE_NAME =
   process.env.NEXT_PUBLIC_CSRF_COOKIE_NAME ??
