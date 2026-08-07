@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const benefits = [
   {
@@ -113,19 +114,22 @@ export default function Home() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+
             <Link
               href="/login"
-              className="hidden h-10 items-center rounded-xl px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/5 sm:inline-flex"
+              className="hidden h-10 items-center rounded-xl px-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/5 sm:inline-flex lg:px-4"
             >
               Masuk
             </Link>
 
             <Link
               href="/register"
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:px-4"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 sm:px-4"
             >
               <span className="sm:hidden">Daftar</span>
               <span className="hidden sm:inline">Coba sekarang</span>
+
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
