@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AuthPageShell } from "@/components/auth-page-shell";
+import { ApiError, getCSRFToken } from "@/lib/api/client";
 import {
   getCurrentUser,
   loginAccount,
@@ -49,6 +50,18 @@ const registerSchema = z
     message: "Konfirmasi password tidak sama",
     path: ["passwordConfirmation"],
   });
+
+function subscribeToSessionHint() {
+  return () => {};
+}
+
+function getSessionHintSnapshot() {
+  return getCSRFToken() !== "";
+}
+
+function getServerSessionHintSnapshot() {
+  return false;
+}
 
 function getSafeReturnPath() {
   if (typeof window === "undefined") {
@@ -85,13 +98,22 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [confirmationVisible, setConfirmationVisible] = useState(false);
   const [formError, setFormError] = useState("");
 
+  const hasSessionHint = useSyncExternalStore(
+    subscribeToSessionHint,
+    getSessionHintSnapshot,
+    getServerSessionHintSnapshot,
+  );
+
   const sessionQuery = useQuery({
     queryKey: ["auth-session-check"],
     queryFn: getCurrentUser,
+    enabled: hasSessionHint,
     retry: false,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 30_000,
+    gcTime: 60_000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   useEffect(() => {
@@ -101,6 +123,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
     router.replace(getSafeReturnPath());
   }, [router, sessionQuery.data]);
+
+  useEffect(() => {
+    if (
+      !(sessionQuery.error instanceof ApiError) ||
+      sessionQuery.error.status !== 401
+    ) {
+      return;
+    }
+
+    queryClient.removeQueries({
+      queryKey: ["auth-session-check"],
+    });
+  }, [queryClient, sessionQuery.error]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -177,7 +212,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     mutation.mutate();
   }
 
-  if (sessionQuery.isPending || sessionQuery.data) {
+  if (hasSessionHint && (sessionQuery.isPending || sessionQuery.data)) {
     return (
       <AuthPageShell
         eyebrow={registerMode ? "Buat akun" : "Masuk ke akun"}
