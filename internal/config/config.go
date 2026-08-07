@@ -61,11 +61,15 @@ func Load() (Config, error) {
 	}
 
 	if cfg.DatabaseURL == "" {
-		return Config{}, errors.New("DATABASE_URL wajib diisi")
+		return Config{}, errors.New(
+			"DATABASE_URL wajib diisi",
+		)
 	}
 
 	if cfg.SessionTTL < time.Hour {
-		return Config{}, errors.New("SESSION_TTL minimal satu jam")
+		return Config{}, errors.New(
+			"SESSION_TTL minimal satu jam",
+		)
 	}
 
 	if cfg.PasswordResetTTL < 10*time.Minute ||
@@ -75,8 +79,11 @@ func Load() (Config, error) {
 		)
 	}
 
-	if cfg.SMTPPort < 1 || cfg.SMTPPort > 65535 {
-		return Config{}, errors.New("SMTP_PORT tidak valid")
+	if cfg.SMTPPort < 1 ||
+		cfg.SMTPPort > 65535 {
+		return Config{}, errors.New(
+			"SMTP_PORT tidak valid",
+		)
 	}
 
 	if cfg.ScanTimeout < 10*time.Second ||
@@ -106,13 +113,19 @@ func loadEnvFile(path string) {
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(
+			scanner.Text(),
+		)
 
-		if line == "" || strings.HasPrefix(line, "#") {
+		if line == "" ||
+			strings.HasPrefix(line, "#") {
 			continue
 		}
 
-		key, value, found := strings.Cut(line, "=")
+		key, value, found := strings.Cut(
+			line,
+			"=",
+		)
 		if !found {
 			continue
 		}
@@ -129,18 +142,34 @@ func loadEnvFile(path string) {
 		}
 
 		if len(value) >= 2 {
-			if strings.HasPrefix(value, `"`) &&
-				strings.HasSuffix(value, `"`) {
-				if unquoted, unquoteErr := strconv.Unquote(value); unquoteErr == nil {
+			if strings.HasPrefix(
+				value,
+				`"`,
+			) &&
+				strings.HasSuffix(
+					value,
+					`"`,
+				) {
+				if unquoted, unquoteErr :=
+					strconv.Unquote(value); unquoteErr == nil {
 					value = unquoted
 				}
-			} else if strings.HasPrefix(value, "'") &&
-				strings.HasSuffix(value, "'") {
+			} else if strings.HasPrefix(
+				value,
+				"'",
+			) &&
+				strings.HasSuffix(
+					value,
+					"'",
+				) {
 				value = value[1 : len(value)-1]
 			}
 		}
 
-		_ = os.Setenv(key, value)
+		_ = os.Setenv(
+			key,
+			value,
+		)
 	}
 }
 
@@ -148,20 +177,46 @@ func getListenAddress(
 	key string,
 	fallback string,
 ) string {
-	port := strings.TrimSpace(os.Getenv("PORT"))
+	appEnv := strings.ToLower(
+		strings.TrimSpace(
+			os.Getenv("APP_ENV"),
+		),
+	)
 
-	if port != "" {
-		return ":" + strings.TrimPrefix(port, ":")
+	if appEnv == "production" {
+		port := strings.TrimSpace(
+			os.Getenv("PORT"),
+		)
+
+		if port != "" {
+			port = strings.TrimPrefix(
+				port,
+				":",
+			)
+
+			if parsedPort, err := strconv.Atoi(
+				port,
+			); err == nil &&
+				parsedPort >= 1 &&
+				parsedPort <= 65535 {
+				return ":" + port
+			}
+		}
 	}
 
-	return getString(key, fallback)
+	return getString(
+		key,
+		fallback,
+	)
 }
 
 func getString(
 	key string,
 	fallback string,
 ) string {
-	value := strings.TrimSpace(os.Getenv(key))
+	value := strings.TrimSpace(
+		os.Getenv(key),
+	)
 
 	if value == "" {
 		return fallback
@@ -174,7 +229,9 @@ func getInt(
 	key string,
 	fallback int,
 ) int {
-	value := strings.TrimSpace(os.Getenv(key))
+	value := strings.TrimSpace(
+		os.Getenv(key),
+	)
 
 	if value == "" {
 		return fallback
@@ -192,14 +249,17 @@ func getDuration(
 	key string,
 	fallback time.Duration,
 ) time.Duration {
-	value := strings.TrimSpace(os.Getenv(key))
+	value := strings.TrimSpace(
+		os.Getenv(key),
+	)
 
 	if value == "" {
 		return fallback
 	}
 
 	parsed, err := time.ParseDuration(value)
-	if err != nil || parsed <= 0 {
+	if err != nil ||
+		parsed <= 0 {
 		return fallback
 	}
 

@@ -33,7 +33,6 @@ const nextExecutable = resolve(
 const developmentEnvironment = {
   ...process.env,
   APP_ENV: "development",
-  PORT: "",
   API_ADDR: "127.0.0.1:8080",
   SCANNER_ADDR: "127.0.0.1:8081",
   SCANNER_URL: "http://127.0.0.1:8081",
@@ -42,6 +41,8 @@ const developmentEnvironment = {
   NEXT_PUBLIC_API_URL: "http://127.0.0.1:8080/api/v1",
   NEXT_PUBLIC_CSRF_COOKIE_NAME: "aksesibilitaswebsite_session_csrf",
 };
+
+delete developmentEnvironment.PORT;
 
 mkdirSync(temporaryDirectory, {
   recursive: true,
