@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FolderKanban,
   History,
@@ -19,7 +19,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { Brand } from "@/components/brand";
-import { LoadingState } from "@/components/ui-kit";
+import { ErrorState, LoadingState } from "@/components/ui-kit";
 import { ApiError } from "@/lib/api/client";
 import { getCurrentUser, logoutAccount } from "@/lib/api/services";
 import { cn } from "@/lib/utils";
@@ -89,17 +89,36 @@ export function AppShell({
     getServerHashSnapshot,
   );
 
+  const returnPath =
+    pathname === "/dashboard" && currentHash
+      ? `${pathname}${currentHash}`
+      : pathname;
+
   const userQuery = useQuery({
     queryKey: ["current-user"],
     queryFn: getCurrentUser,
     retry: false,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
-    if (userQuery.error instanceof ApiError && userQuery.error.status === 401) {
-      router.replace("/login");
+    if (
+      !(userQuery.error instanceof ApiError) ||
+      userQuery.error.status !== 401
+    ) {
+      return;
     }
-  }, [router, userQuery.error]);
+
+    queryClient.removeQueries({
+      predicate: (query) => query.queryKey[0] !== "current-user",
+    });
+
+    router.replace(`/login?next=${encodeURIComponent(returnPath)}`);
+  }, [queryClient, returnPath, router, userQuery.error]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -123,6 +142,32 @@ export function AppShell({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [menuOpen]);
+
+  const logoutMutation = useMutation({
+    mutationFn: logoutAccount,
+    onSuccess: () => {
+      queryClient.removeQueries();
+
+      toast.success("Berhasil keluar dari akun");
+
+      router.replace("/login");
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.removeQueries();
+
+        toast.info("Sesi Anda sudah berakhir");
+
+        router.replace("/login");
+
+        return;
+      }
+
+      toast.error(
+        error instanceof Error ? error.message : "Gagal keluar dari akun",
+      );
+    },
+  });
 
   function navigationIsActive(item: (typeof navigation)[number]) {
     if (item.hash === "#projects") {
@@ -152,19 +197,12 @@ export function AppShell({
 
   const activeNavigation = navigation.find(navigationIsActive) ?? navigation[0];
 
-  async function handleLogout() {
-    try {
-      await logoutAccount();
-
-      queryClient.clear();
-
-      router.replace("/login");
-      router.refresh();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Gagal keluar dari akun",
-      );
+  function handleLogout() {
+    if (logoutMutation.isPending) {
+      return;
     }
+
+    logoutMutation.mutate();
   }
 
   if (userQuery.isPending) {
@@ -175,8 +213,37 @@ export function AppShell({
     );
   }
 
-  if (!userQuery.data) {
-    return null;
+  if (userQuery.error instanceof ApiError && userQuery.error.status === 401) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-slate-50 px-4 dark:bg-slate-950">
+        <LoadingState label="Sesi berakhir, mengalihkan ke halaman masuk" />
+      </main>
+    );
+  }
+
+  if (userQuery.error || !userQuery.data) {
+    return (
+      <main className="min-h-dvh bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6">
+        <div className="mx-auto max-w-xl">
+          <ErrorState
+            message={
+              userQuery.error instanceof Error
+                ? userQuery.error.message
+                : "Sesi akun tidak dapat diperiksa"
+            }
+          />
+
+          <button
+            type="button"
+            onClick={() => userQuery.refetch()}
+            disabled={userQuery.isFetching}
+            className="mt-4 flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {userQuery.isFetching ? "Memeriksa kembali..." : "Coba lagi"}
+          </button>
+        </div>
+      </main>
+    );
   }
 
   const user = userQuery.data;
@@ -257,10 +324,12 @@ export function AppShell({
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-red-400/20 dark:hover:bg-red-400/10 dark:hover:text-red-300"
+              disabled={logoutMutation.isPending}
+              className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-red-400/20 dark:hover:bg-red-400/10 dark:hover:text-red-300"
             >
               <LogOut className="size-4" aria-hidden="true" />
-              Keluar
+
+              {logoutMutation.isPending ? "Keluar..." : "Keluar"}
             </button>
           </div>
         </div>
@@ -422,10 +491,12 @@ export function AppShell({
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
+                  disabled={logoutMutation.isPending}
+                  className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
                 >
                   <LogOut className="size-4" aria-hidden="true" />
-                  Keluar dari akun
+
+                  {logoutMutation.isPending ? "Keluar..." : "Keluar dari akun"}
                 </button>
               </div>
             </div>

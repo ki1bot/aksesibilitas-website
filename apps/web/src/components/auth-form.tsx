@@ -1,22 +1,27 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   Eye,
   EyeOff,
+  LoaderCircle,
   LockKeyhole,
   Mail,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AuthPageShell } from "@/components/auth-page-shell";
-import { loginAccount, registerAccount } from "@/lib/api/services";
+import {
+  getCurrentUser,
+  loginAccount,
+  registerAccount,
+} from "@/lib/api/services";
 
 const loginSchema = z.object({
   email: z.email("Masukkan alamat email yang valid"),
@@ -36,6 +41,27 @@ const registerSchema = z.object({
     .max(72, "Password maksimal 72 karakter"),
 });
 
+function getSafeReturnPath() {
+  if (typeof window === "undefined") {
+    return "/dashboard";
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const candidate = searchParams.get("next")?.trim() ?? "";
+
+  if (
+    candidate === "/dashboard" ||
+    candidate.startsWith("/dashboard#") ||
+    candidate === "/change-password" ||
+    candidate.startsWith("/projects/") ||
+    candidate.startsWith("/scans/")
+  ) {
+    return candidate;
+  }
+
+  return "/dashboard";
+}
+
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -47,12 +73,31 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [formError, setFormError] = useState("");
 
+  const sessionQuery = useQuery({
+    queryKey: ["auth-session-check"],
+    queryFn: getCurrentUser,
+    retry: false,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!sessionQuery.data) {
+      return;
+    }
+
+    router.replace(getSafeReturnPath());
+  }, [router, sessionQuery.data]);
+
   const mutation = useMutation({
     mutationFn: async () => {
+      const normalizedEmail = email.trim().toLowerCase();
+
       if (registerMode) {
         const parsed = registerSchema.safeParse({
-          name,
-          email,
+          name: name.trim(),
+          email: normalizedEmail,
           password,
         });
 
@@ -66,7 +111,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       }
 
       const parsed = loginSchema.safeParse({
-        email,
+        email: normalizedEmail,
         password,
       });
 
@@ -78,15 +123,18 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
       return loginAccount(parsed.data);
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
+      const destination = getSafeReturnPath();
+
+      queryClient.removeQueries();
+
       queryClient.setQueryData(["current-user"], data.user);
 
-      await queryClient.invalidateQueries({
-        queryKey: ["projects"],
-      });
+      toast.success(
+        registerMode ? "Akun berhasil dibuat" : "Berhasil masuk ke akun",
+      );
 
-      router.replace("/dashboard");
-      router.refresh();
+      router.replace(destination);
     },
     onError: (error) => {
       const message =
@@ -101,8 +149,36 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (mutation.isPending) {
+      return;
+    }
+
     setFormError("");
     mutation.mutate();
+  }
+
+  if (sessionQuery.isPending || sessionQuery.data) {
+    return (
+      <AuthPageShell
+        eyebrow={registerMode ? "Buat akun" : "Masuk ke akun"}
+        title="Memeriksa sesi"
+        description="Kami sedang memeriksa apakah akun Anda masih memiliki sesi aktif."
+      >
+        <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
+          <LoaderCircle
+            className="size-8 animate-spin text-blue-600"
+            aria-hidden="true"
+          />
+
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            {sessionQuery.data
+              ? "Membuka dashboard..."
+              : "Memeriksa sesi akun..."}
+          </p>
+        </div>
+      </AuthPageShell>
+    );
   }
 
   return (
@@ -159,8 +235,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                 required
                 minLength={2}
                 maxLength={100}
+                disabled={mutation.isPending}
                 placeholder="Rifqi"
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5"
               />
             </span>
           </label>
@@ -181,8 +258,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              placeholder="Rifqi@email.com"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+              disabled={mutation.isPending}
+              placeholder="rifqi@email.com"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5"
             />
           </span>
         </label>
@@ -215,16 +293,18 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               required
               minLength={registerMode ? 10 : 1}
               maxLength={72}
+              disabled={mutation.isPending}
               placeholder={
                 registerMode ? "Minimal 10 karakter" : "Masukkan password"
               }
-              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5"
             />
 
             <button
               type="button"
               onClick={() => setPasswordVisible((value) => !value)}
-              className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/5"
+              disabled={mutation.isPending}
+              className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/5"
               aria-label={
                 passwordVisible ? "Sembunyikan password" : "Tampilkan password"
               }
@@ -259,14 +339,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           disabled={mutation.isPending}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {mutation.isPending
-            ? "Sedang memproses..."
-            : registerMode
-              ? "Buat akun"
-              : "Masuk"}
-
-          {!mutation.isPending && (
-            <ArrowRight className="size-4" aria-hidden="true" />
+          {mutation.isPending ? (
+            <>
+              <LoaderCircle
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
+              {registerMode ? "Membuat akun..." : "Sedang masuk..."}
+            </>
+          ) : (
+            <>
+              {registerMode ? "Buat akun" : "Masuk"}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </>
           )}
         </button>
       </form>

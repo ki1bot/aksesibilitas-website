@@ -76,6 +76,8 @@ const steps = [
 ];
 
 export default function Home() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <main className="min-h-dvh overflow-hidden bg-white text-slate-950 dark:bg-slate-950 dark:text-white">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90">
@@ -478,13 +480,16 @@ export default function Home() {
             <Brand />
           </div>
 
-          <p className="max-w-2xl leading-6 sm:text-right">
-            <p className="max-w-full text-xs font-medium leading-6 sm:text-sm sm:leading-7">
-              © {new Date().getFullYear()} All rights reserved.
+          <div className="max-w-2xl sm:text-right">
+            <p className="text-xs font-medium leading-6 sm:text-sm sm:leading-7">
+              © {currentYear} All rights reserved.
             </p>
-            AksesCheck membantu proses pemeriksaan, bukan menggantikan audit
-            manual secara menyeluruh.
-          </p>
+
+            <p className="mt-1 leading-6">
+              AksesCheck membantu proses pemeriksaan, bukan menggantikan audit
+              manual secara menyeluruh.
+            </p>
+          </div>
         </div>
       </footer>
     </main>
