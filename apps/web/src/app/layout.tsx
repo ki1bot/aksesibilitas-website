@@ -16,10 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "AksesCheck ID",
-    template: "%s | AksesCheck ID",
-  },
+  title: "Rifqi | AksesCheck ID",
   description:
     "Periksa aksesibilitas website, pahami masalahnya, dan tentukan bagian yang perlu diperbaiki lebih dulu.",
   applicationName: "AksesCheck ID",

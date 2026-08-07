@@ -505,8 +505,8 @@ pnpm --filter web start
 API dan worker perlu dibangun secara terpisah:
 
 ```bash
-go build -o bin/aksescheck-api.exe ./services/api/cmd/api
-go build -o bin/aksescheck-worker.exe ./services/worker/cmd/worker
+go build -o bin/aksescheck-api.exe ./apps/api/cmd/api
+go build -o bin/aksescheck-worker.exe ./apps/scanner/cmd/scanner
 ```
 
 Jalankan API:

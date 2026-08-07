@@ -14,9 +14,9 @@ const apiExecutable = resolve(
   `aksescheck-api-dev${executableExtension}`,
 );
 
-const workerExecutable = resolve(
+const scannerExecutable = resolve(
   temporaryDirectory,
-  `aksescheck-worker-dev${executableExtension}`,
+  `aksescheck-scanner-dev${executableExtension}`,
 );
 
 const nextExecutable = resolve(
@@ -62,9 +62,9 @@ function build(name, output, packagePath) {
   }
 }
 
-build("API", apiExecutable, "./services/api/cmd/api");
+build("API", apiExecutable, "./apps/api/cmd/api");
 
-build("worker", workerExecutable, "./services/worker/cmd/worker");
+build("scanner", scannerExecutable, "./apps/scanner/cmd/scanner");
 
 const processes = new Map();
 
@@ -201,7 +201,7 @@ process.on("unhandledRejection", (error) => {
 
 startProcess("API", apiExecutable, []);
 
-startProcess("WORKER", workerExecutable, []);
+startProcess("SCANNER", scannerExecutable, []);
 
 startProcess("WEB", process.execPath, [
   nextExecutable,
