@@ -7,7 +7,7 @@
     },
     "api": {
       "root": ".",
-      "entrypoint": "apps/api/Dockerfile.vercel",
+      "entrypoint": "Dockerfile.vercel",
       "runtime": "container",
       "bindings": [
         {
@@ -20,7 +20,7 @@
     },
     "scanner": {
       "root": ".",
-      "entrypoint": "apps/scanner/Dockerfile.vercel",
+      "entrypoint": "Containerfile.vercel",
       "runtime": "container"
     }
   },
