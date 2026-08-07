@@ -9,7 +9,6 @@ func (server *Server) health(
 	response := healthResponse{
 		Status:   "ok",
 		Database: "ok",
-		Redis:    "ok",
 	}
 
 	statusCode := http.StatusOK
@@ -22,13 +21,9 @@ func (server *Server) health(
 		statusCode = http.StatusServiceUnavailable
 	}
 
-	if err := server.redisClient.Ping(
-		request.Context(),
-	).Err(); err != nil {
-		response.Status = "degraded"
-		response.Redis = "unavailable"
-		statusCode = http.StatusServiceUnavailable
-	}
-
-	writeJSON(writer, statusCode, response)
+	writeJSON(
+		writer,
+		statusCode,
+		response,
+	)
 }

@@ -46,7 +46,6 @@ type authResponse struct {
 type healthResponse struct {
 	Status   string `json:"status"`
 	Database string `json:"database"`
-	Redis    string `json:"redis"`
 }
 
 type errorResponse struct {

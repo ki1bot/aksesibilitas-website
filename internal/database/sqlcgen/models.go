@@ -230,6 +230,13 @@ type ManualReviewItem struct {
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
+type PasswordResetToken struct {
+	TokenHash string             `json:"token_hash"`
+	UserID    uuid.UUID          `json:"user_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Project struct {
 	ID          uuid.UUID          `json:"id"`
 	OwnerID     uuid.UUID          `json:"owner_id"`
@@ -244,6 +251,13 @@ type ProjectMember struct {
 	UserID    uuid.UUID          `json:"user_id"`
 	Role      string             `json:"role"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type RateLimit struct {
+	KeyHash         string             `json:"key_hash"`
+	RequestCount    int64              `json:"request_count"`
+	WindowStartedAt pgtype.Timestamptz `json:"window_started_at"`
+	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
 }
 
 type Report struct {

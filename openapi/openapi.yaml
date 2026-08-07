@@ -713,7 +713,6 @@ components:
       required:
         - status
         - database
-        - redis
       properties:
         status:
           type: string
@@ -721,11 +720,6 @@ components:
             - ok
             - degraded
         database:
-          type: string
-          enum:
-            - ok
-            - unavailable
-        redis:
           type: string
           enum:
             - ok

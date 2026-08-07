@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"time"
 )
@@ -57,7 +59,10 @@ func (server *Server) csrf(
 			if request.Method == http.MethodGet ||
 				request.Method == http.MethodHead ||
 				request.Method == http.MethodOptions {
-				next.ServeHTTP(writer, request)
+				next.ServeHTTP(
+					writer,
+					request,
+				)
 				return
 			}
 
@@ -79,7 +84,10 @@ func (server *Server) csrf(
 				return
 			}
 
-			next.ServeHTTP(writer, request)
+			next.ServeHTTP(
+				writer,
+				request,
+			)
 		},
 	)
 }
@@ -112,7 +120,10 @@ func (server *Server) securityHeaders(
 				"camera=(), microphone=(), geolocation=()",
 			)
 
-			next.ServeHTTP(writer, request)
+			next.ServeHTTP(
+				writer,
+				request,
+			)
 		},
 	)
 }
@@ -155,15 +166,17 @@ func (server *Server) cors(
 				"GET, POST, PATCH, DELETE, OPTIONS",
 			)
 
-			if request.Method ==
-				http.MethodOptions {
+			if request.Method == http.MethodOptions {
 				writer.WriteHeader(
 					http.StatusNoContent,
 				)
 				return
 			}
 
-			next.ServeHTTP(writer, request)
+			next.ServeHTTP(
+				writer,
+				request,
+			)
 		},
 	)
 }
@@ -174,24 +187,70 @@ func (server *Server) allowRequest(
 	limit int64,
 	window time.Duration,
 ) (bool, error) {
-	rateKey := "rate:" + key
+	hash := sha256.Sum256(
+		[]byte(key),
+	)
 
-	count, err := server.redisClient.Incr(
-		ctx,
-		rateKey,
-	).Result()
-	if err != nil {
-		return false, err
+	keyHash := hex.EncodeToString(
+		hash[:],
+	)
+
+	windowSeconds := int64(
+		window / time.Second,
+	)
+
+	if windowSeconds < 1 {
+		windowSeconds = 1
 	}
 
-	if count == 1 {
-		if err := server.redisClient.Expire(
-			ctx,
-			rateKey,
-			window,
-		).Err(); err != nil {
-			return false, err
-		}
+	var count int64
+
+	err := server.pool.QueryRow(
+		ctx,
+		`
+			INSERT INTO rate_limits (
+				key_hash,
+				request_count,
+				window_started_at,
+				expires_at
+			)
+			VALUES (
+				$1,
+				1,
+				NOW(),
+				NOW() + (
+					$2::bigint * INTERVAL '1 second'
+				)
+			)
+			ON CONFLICT (key_hash)
+			DO UPDATE SET
+				request_count = CASE
+					WHEN rate_limits.expires_at <= NOW()
+					THEN 1
+					ELSE rate_limits.request_count + 1
+				END,
+				window_started_at = CASE
+					WHEN rate_limits.expires_at <= NOW()
+					THEN NOW()
+					ELSE rate_limits.window_started_at
+				END,
+				expires_at = CASE
+					WHEN rate_limits.expires_at <= NOW()
+					THEN NOW() + (
+						$2::bigint * INTERVAL '1 second'
+					)
+					ELSE rate_limits.expires_at
+				END
+			RETURNING request_count
+		`,
+		keyHash,
+		windowSeconds,
+	).Scan(
+		&count,
+	)
+
+	if err != nil {
+		return false, err
 	}
 
 	return count <= limit, nil

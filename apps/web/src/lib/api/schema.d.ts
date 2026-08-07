@@ -347,8 +347,6 @@ export interface components {
             status: "ok" | "degraded";
             /** @enum {string} */
             database: "ok" | "unavailable";
-            /** @enum {string} */
-            redis: "ok" | "unavailable";
         };
         RegisterRequest: {
             name: string;
