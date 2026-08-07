@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   ArrowRight,
   Eye,
   EyeOff,
@@ -21,8 +22,8 @@ import { z } from "zod";
 
 import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingState } from "@/components/ui-kit";
-import { getCurrentUser } from "@/lib/api/services";
 import { updateCurrentUser } from "@/lib/api/profile";
+import { getCurrentUser } from "@/lib/api/services";
 import type { User } from "@/lib/api/types";
 
 const profileSchema = z.object({
@@ -153,7 +154,18 @@ function ProfileContent({ user }: { user: User }) {
 
   return (
     <section className="mx-auto w-full max-w-5xl">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <Link
+        href="/dashboard"
+        className="group inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+      >
+        <ArrowLeft
+          className="size-4 transition-transform group-hover:-translate-x-1"
+          aria-hidden="true"
+        />
+        Kembali ke dashboard
+      </Link>
+
+      <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
             Akun

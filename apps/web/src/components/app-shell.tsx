@@ -15,12 +15,10 @@ import { getCurrentUser, logoutAccount } from "@/lib/api/services";
 
 function subscribeToHashChange(callback: () => void) {
   window.addEventListener("hashchange", callback);
-
   window.addEventListener("popstate", callback);
 
   return () => {
     window.removeEventListener("hashchange", callback);
-
     window.removeEventListener("popstate", callback);
   };
 }
@@ -169,7 +167,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/95">
-        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10">
+        <div className="mx-auto flex h-16 w-full max-w-[1320px] items-center justify-between gap-4 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
           <div className="min-w-0 shrink">
             <Brand href="/dashboard" />
           </div>
@@ -230,7 +228,7 @@ export function AppShell({
       </header>
 
       <main className="min-w-0">
-        <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 xl:px-10">
+        <div className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 xl:py-12">
           {children}
         </div>
       </main>

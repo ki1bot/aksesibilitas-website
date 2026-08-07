@@ -82,13 +82,13 @@ export default function Home() {
   return (
     <main className="min-h-dvh overflow-hidden bg-white text-slate-950 dark:bg-slate-950 dark:text-white">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 w-full max-w-[1320px] items-center justify-between gap-4 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
           <div className="min-w-0 shrink">
             <Brand />
           </div>
 
           <nav
-            className="hidden items-center gap-7 md:flex"
+            className="hidden items-center gap-8 md:flex"
             aria-label="Navigasi halaman utama"
           >
             <a
@@ -138,28 +138,28 @@ export default function Home() {
 
       <div className="relative bg-[radial-gradient(circle_at_10%_15%,rgba(13,148,136,0.18),transparent_28%),radial-gradient(circle_at_90%_80%,rgba(217,70,239,0.09),transparent_28%)] bg-fixed">
         <section>
-          <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.04fr)_minmax(360px,0.96fr)] lg:items-center lg:gap-14 lg:px-8 lg:py-28">
-            <div className="min-w-0">
+          <div className="mx-auto grid w-full max-w-[1320px] gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(400px,0.9fr)] lg:items-center lg:gap-10 lg:px-8 lg:py-20 xl:gap-16 xl:py-24">
+            <div className="min-w-0 lg:max-w-[690px]">
               <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:border-blue-400/20 dark:bg-blue-400/10 dark:text-blue-300">
                 <ShieldCheck className="size-4 shrink-0" aria-hidden="true" />
 
                 <span>Mengacu pada WCAG 2.2 Level A dan AA</span>
               </span>
 
-              <h1 className="mt-6 max-w-4xl text-[clamp(2.5rem,8vw,4.75rem)] font-black leading-[1.03] tracking-[-0.05em]">
+              <h1 className="mt-6 max-w-[680px] text-[clamp(2.5rem,8vw,4.75rem)] font-black leading-[1.03] tracking-[-0.05em] sm:text-5xl lg:text-[3.75rem] lg:leading-[1.02] xl:text-[4.25rem]">
                 Cari masalah aksesibilitas{" "}
                 <span className="text-blue-600 dark:text-blue-400">
                   sebelum pengguna menemukannya.
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8 dark:text-slate-300">
+              <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8 dark:text-slate-300">
                 AksesCheck membantu Anda memeriksa halaman website, memahami
                 masalahnya, dan menentukan bagian mana yang harus diperbaiki
                 lebih dulu.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/register"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700 sm:px-6"
@@ -176,7 +176,7 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="mt-8 grid gap-3 text-sm font-semibold text-slate-600 sm:grid-cols-2 dark:text-slate-300">
+              <div className="mt-8 grid max-w-xl gap-x-6 gap-y-3 text-sm font-semibold text-slate-600 sm:grid-cols-2 dark:text-slate-300">
                 {[
                   "Tidak perlu memasang ekstensi",
                   "Hasil tersimpan di setiap project",
@@ -198,7 +198,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
+            <div className="relative mx-auto w-full max-w-xl lg:ml-auto lg:max-w-[560px]">
               <div className="absolute -inset-6 rounded-full bg-blue-600/15 blur-3xl sm:-inset-8" />
 
               <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-950 p-4 text-white shadow-2xl shadow-blue-950/20 sm:p-6 lg:p-7 dark:border-white/10">
@@ -295,14 +295,17 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="manfaat" className="py-16 sm:py-20 lg:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section
+          id="manfaat"
+          className="scroll-mt-24 py-16 sm:py-20 lg:py-20 xl:py-24"
+        >
+          <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 sm:text-sm dark:text-blue-400">
                 Yang Anda dapatkan
               </p>
 
-              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl lg:text-[2.5rem] lg:leading-tight">
                 Hasil yang mudah dibaca, bukan sekadar angka.
               </h2>
 
@@ -312,14 +315,14 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-4 sm:mt-12 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-10 grid gap-4 sm:mt-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
               {benefits.map((benefit) => {
                 const Icon = benefit.icon;
 
                 return (
                   <article
                     key={benefit.title}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-600/5 sm:rounded-3xl sm:p-6 dark:border-white/10 dark:bg-white/[0.03]"
+                    className="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-600/5 sm:rounded-3xl sm:p-6 lg:p-7 dark:border-white/10 dark:bg-white/[0.03]"
                   >
                     <span className="grid size-11 place-items-center rounded-xl bg-blue-50 text-blue-600 sm:size-12 sm:rounded-2xl dark:bg-blue-400/10 dark:text-blue-300">
                       <Icon className="size-5" aria-hidden="true" />
@@ -339,10 +342,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="cara-kerja" className="py-16 sm:py-20 lg:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:items-start lg:gap-14">
-              <div className="lg:sticky lg:top-24">
+        <section
+          id="cara-kerja"
+          className="scroll-mt-24 py-16 sm:py-20 lg:py-20 xl:py-24"
+        >
+          <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:items-start lg:gap-16">
+              <div className="lg:sticky lg:top-28 lg:max-w-[470px]">
                 <span className="grid size-12 place-items-center rounded-xl bg-blue-600 text-white shadow-xl shadow-blue-600/20 sm:size-14 sm:rounded-2xl">
                   <Gauge className="size-6" aria-hidden="true" />
                 </span>
@@ -351,7 +357,7 @@ export default function Home() {
                   Cara kerja
                 </p>
 
-                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl lg:text-[2.5rem] lg:leading-tight">
                   Tiga langkah dari URL sampai daftar perbaikan.
                 </h2>
 
@@ -365,7 +371,7 @@ export default function Home() {
                 {steps.map((step) => (
                   <li
                     key={step.number}
-                    className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:gap-5 sm:rounded-3xl sm:p-6 dark:border-white/10 dark:bg-white/[0.03]"
+                    className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:gap-5 sm:rounded-3xl sm:p-6 lg:p-7 dark:border-white/10 dark:bg-white/[0.03]"
                   >
                     <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-950 text-xs font-black text-white sm:size-12 sm:rounded-2xl sm:text-sm dark:bg-blue-600">
                       {step.number}
@@ -387,14 +393,17 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="keamanan" className="py-16 sm:py-20 lg:py-24">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:items-center lg:gap-14 lg:px-8">
-            <div>
+        <section
+          id="keamanan"
+          className="scroll-mt-24 py-16 sm:py-20 lg:py-20 xl:py-24"
+        >
+          <div className="mx-auto grid w-full max-w-[1320px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:gap-16 lg:px-8">
+            <div className="lg:max-w-[560px]">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 sm:text-sm dark:text-blue-300">
                 Keamanan tetap diperhatikan
               </p>
 
-              <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
+              <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl lg:text-[2.5rem] lg:leading-tight">
                 Sistem tidak langsung membuka setiap URL yang diberikan.
               </h2>
 
@@ -426,7 +435,7 @@ export default function Home() {
               ].map(([title, description]) => (
                 <article
                   key={title}
-                  className="rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur-sm sm:p-5 dark:border-white/10 dark:bg-white/5"
+                  className="h-full rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur-sm sm:p-5 lg:p-6 dark:border-white/10 dark:bg-white/5"
                 >
                   <ShieldCheck
                     className="size-5 text-blue-600 dark:text-blue-300"
@@ -444,9 +453,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-16 sm:py-20 lg:py-24">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <div className="relative overflow-hidden rounded-[1.75rem] bg-blue-600 px-5 py-10 text-center text-white shadow-2xl shadow-blue-600/20 sm:rounded-[2.25rem] sm:px-12 sm:py-14 lg:py-16">
+        <section className="py-16 sm:py-20 lg:py-20 xl:py-24">
+          <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+            <div className="relative overflow-hidden rounded-[1.75rem] bg-blue-600 px-5 py-10 text-center text-white shadow-2xl shadow-blue-600/20 sm:rounded-[2.25rem] sm:px-12 sm:py-14 lg:px-16 lg:py-16">
               <div className="absolute -left-20 -top-20 size-64 rounded-full bg-white/10 blur-2xl" />
 
               <div className="absolute -bottom-24 -right-16 size-72 rounded-full bg-violet-500/20 blur-3xl" />
@@ -475,7 +484,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t border-slate-200 py-7 dark:border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="shrink-0">
             <Brand />
           </div>
