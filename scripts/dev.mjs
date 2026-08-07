@@ -32,10 +32,12 @@ const nextExecutable = resolve(
 
 const developmentEnvironment = {
   ...process.env,
+  APP_ENV: "development",
+  PORT: "",
   API_ADDR: "127.0.0.1:8080",
   SCANNER_ADDR: "127.0.0.1:8081",
   SCANNER_URL: "http://127.0.0.1:8081",
-  SCANNER_TOKEN: process.env.SCANNER_TOKEN ?? "aksescheck-local-scanner-token",
+  SCANNER_TOKEN: "aksescheck-local-scanner-token",
   WEB_ORIGIN: "http://127.0.0.1:3000",
   NEXT_PUBLIC_API_URL: "http://127.0.0.1:8080/api/v1",
   NEXT_PUBLIC_CSRF_COOKIE_NAME: "aksesibilitaswebsite_session_csrf",
@@ -195,12 +197,14 @@ process.on("SIGTERM", () => {
 
 process.on("uncaughtException", (error) => {
   console.error(error);
+
   exitCode = 1;
   shutdown(false);
 });
 
 process.on("unhandledRejection", (error) => {
   console.error(error);
+
   exitCode = 1;
   shutdown(false);
 });
