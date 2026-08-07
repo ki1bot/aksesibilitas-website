@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  FolderKanban,
-  History,
-  KeyRound,
-  LayoutDashboard,
-  LogOut,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -20,43 +12,15 @@ import { Brand } from "@/components/brand";
 import { ErrorState, LoadingState } from "@/components/ui-kit";
 import { ApiError } from "@/lib/api/client";
 import { getCurrentUser, logoutAccount } from "@/lib/api/services";
-import { cn } from "@/lib/utils";
-
-const navigation = [
-  {
-    href: "/dashboard",
-    label: "Ringkasan",
-    description: "Lihat kondisi workspace",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/dashboard#projects",
-    label: "Project",
-    description: "Kelola website yang diperiksa",
-    icon: FolderKanban,
-    hash: "#projects",
-  },
-  {
-    href: "/dashboard#history",
-    label: "Riwayat",
-    description: "Buka hasil pemeriksaan sebelumnya",
-    icon: History,
-    hash: "#history",
-  },
-  {
-    href: "/change-password",
-    label: "Password",
-    description: "Perbarui keamanan akun",
-    icon: KeyRound,
-  },
-];
 
 function subscribeToHashChange(callback: () => void) {
   window.addEventListener("hashchange", callback);
+
   window.addEventListener("popstate", callback);
 
   return () => {
     window.removeEventListener("hashchange", callback);
+
     window.removeEventListener("popstate", callback);
   };
 }
@@ -77,6 +41,7 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+
   const { resolvedTheme, setTheme } = useTheme();
 
   const currentHash = useSyncExternalStore(
@@ -118,6 +83,7 @@ export function AppShell({
 
   const logoutMutation = useMutation({
     mutationFn: logoutAccount,
+
     onSuccess: () => {
       queryClient.removeQueries();
 
@@ -125,6 +91,7 @@ export function AppShell({
 
       router.replace("/login");
     },
+
     onError: (error) => {
       if (error instanceof ApiError && error.status === 401) {
         queryClient.removeQueries();
@@ -141,32 +108,6 @@ export function AppShell({
       );
     },
   });
-
-  function navigationIsActive(item: (typeof navigation)[number]) {
-    if (item.hash === "#projects") {
-      return (
-        (pathname === "/dashboard" && currentHash === "#projects") ||
-        pathname.startsWith("/projects/")
-      );
-    }
-
-    if (item.hash === "#history") {
-      return (
-        (pathname === "/dashboard" && currentHash === "#history") ||
-        pathname.startsWith("/scans/")
-      );
-    }
-
-    if (item.href === "/dashboard") {
-      return (
-        pathname === "/dashboard" &&
-        currentHash !== "#projects" &&
-        currentHash !== "#history"
-      );
-    }
-
-    return pathname === item.href;
-  }
 
   function handleLogout() {
     if (logoutMutation.isPending) {
@@ -223,58 +164,37 @@ export function AppShell({
 
   const user = userQuery.data;
 
+  const initial = user.name.trim().slice(0, 1).toUpperCase() || "U";
+
   return (
     <div className="min-h-dvh bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/95">
-        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10">
-          <div className="shrink-0">
+        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10">
+          <div className="min-w-0 shrink">
             <Brand href="/dashboard" />
           </div>
 
-          <nav
-            className="ml-6 hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex"
-            aria-label="Navigasi utama"
-          >
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = navigationIsActive(item);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition xl:px-4",
-                    active
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white",
-                  )}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <div className="hidden min-w-0 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-3 dark:border-white/10 dark:bg-white/[0.04] sm:flex">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-100 text-xs font-black text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
-                {user.name.slice(0, 1).toUpperCase()}
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/profile"
+              aria-label="Buka profil"
+              aria-current={pathname === "/profile" ? "page" : undefined}
+              className="group flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-1.5 transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-blue-400/30 dark:hover:bg-blue-400/10 sm:pr-3"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-100 text-xs font-black text-blue-700 transition group-hover:bg-blue-200 dark:bg-blue-400/10 dark:text-blue-300 dark:group-hover:bg-blue-400/20">
+                {initial}
               </span>
 
-              <div className="hidden min-w-0 xl:block">
-                <p className="max-w-36 truncate text-xs font-bold">
+              <div className="hidden min-w-0 sm:block">
+                <p className="max-w-36 truncate text-xs font-bold text-slate-900 dark:text-white">
                   {user.name}
                 </p>
 
-                <p className="mt-0.5 max-w-36 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="mt-0.5 hidden max-w-44 truncate text-[11px] text-slate-500 dark:text-slate-400 lg:block">
                   {user.email}
                 </p>
               </div>
-            </div>
+            </Link>
 
             <button
               type="button"
@@ -301,41 +221,11 @@ export function AppShell({
             >
               <LogOut className="size-4" aria-hidden="true" />
 
-              <span className="hidden md:inline">
+              <span className="hidden sm:inline">
                 {logoutMutation.isPending ? "Keluar..." : "Keluar"}
               </span>
             </button>
           </div>
-        </div>
-
-        <div className="border-t border-slate-100 dark:border-white/5 lg:hidden">
-          <nav
-            className="mx-auto flex w-full max-w-[1440px] gap-2 overflow-x-auto px-4 py-2.5 sm:px-6"
-            aria-label="Navigasi mobile"
-          >
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const active = navigationIsActive(item);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-sm font-bold transition",
-                    active
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/15"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
-                  )}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
       </header>
 

@@ -34,7 +34,9 @@ const registerSchema = z.object({
     .trim()
     .min(2, "Nama minimal 2 karakter")
     .max(100, "Nama maksimal 100 karakter"),
+
   email: z.email("Masukkan alamat email yang valid"),
+
   password: z
     .string()
     .min(10, "Password minimal 10 karakter")
@@ -53,6 +55,7 @@ function getSafeReturnPath() {
   if (
     candidate === "/dashboard" ||
     candidate.startsWith("/dashboard#") ||
+    candidate === "/profile" ||
     candidate === "/change-password" ||
     candidate.startsWith("/projects/") ||
     candidate.startsWith("/scans/")
@@ -65,13 +68,19 @@ function getSafeReturnPath() {
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
+
   const queryClient = useQueryClient();
+
   const registerMode = mode === "register";
 
   const [name, setName] = useState("");
+
   const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
+
   const [passwordVisible, setPasswordVisible] = useState(false);
+
   const [formError, setFormError] = useState("");
 
   const sessionQuery = useQuery({
@@ -124,6 +133,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
       return loginAccount(parsed.data);
     },
+
     onSuccess: (data) => {
       const destination = getSafeReturnPath();
 
@@ -137,6 +147,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
       router.replace(destination);
     },
+
     onError: (error) => {
       const message =
         error instanceof Error
@@ -144,6 +155,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           : "Permintaan tidak dapat diproses";
 
       setFormError(message);
+
       toast.error(message);
     },
   });
@@ -156,6 +168,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     }
 
     setFormError("");
+
     mutation.mutate();
   }
 
