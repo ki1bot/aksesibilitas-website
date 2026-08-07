@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { AuthPageShell } from "@/components/auth-page-shell";
-import { ApiError, getCSRFToken } from "@/lib/api/client";
+import { ApiError, clearCSRFToken, getCSRFToken } from "@/lib/api/client";
 import {
   getCurrentUser,
   loginAccount,
@@ -69,6 +69,7 @@ function getSafeReturnPath() {
   }
 
   const searchParams = new URLSearchParams(window.location.search);
+
   const candidate = searchParams.get("next")?.trim() ?? "";
 
   if (
@@ -106,7 +107,24 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   const sessionQuery = useQuery({
     queryKey: ["auth-session-check"],
-    queryFn: getCurrentUser,
+    queryFn: async () => {
+      try {
+        return await getCurrentUser();
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          clearCSRFToken();
+
+          queryClient.removeQueries({
+            queryKey: ["current-user"],
+            exact: true,
+          });
+
+          return null;
+        }
+
+        throw error;
+      }
+    },
     enabled: hasSessionHint,
     retry: false,
     staleTime: 30_000,
@@ -123,19 +141,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
     router.replace(getSafeReturnPath());
   }, [router, sessionQuery.data]);
-
-  useEffect(() => {
-    if (
-      !(sessionQuery.error instanceof ApiError) ||
-      sessionQuery.error.status !== 401
-    ) {
-      return;
-    }
-
-    queryClient.removeQueries({
-      queryKey: ["auth-session-check"],
-    });
-  }, [queryClient, sessionQuery.error]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -212,7 +217,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     mutation.mutate();
   }
 
-  if (hasSessionHint && (sessionQuery.isPending || sessionQuery.data)) {
+  if (hasSessionHint && sessionQuery.isPending) {
     return (
       <AuthPageShell
         eyebrow={registerMode ? "Buat akun" : "Masuk ke akun"}
@@ -227,9 +232,29 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           />
 
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-            {sessionQuery.data
-              ? "Membuka dashboard..."
-              : "Memeriksa sesi akun..."}
+            Memeriksa sesi akun...
+          </p>
+        </div>
+      </AuthPageShell>
+    );
+  }
+
+  if (sessionQuery.data) {
+    return (
+      <AuthPageShell
+        eyebrow={registerMode ? "Buat akun" : "Masuk ke akun"}
+        title="Membuka dashboard"
+        description="Sesi akun Anda masih aktif."
+        showHomeLink
+      >
+        <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
+          <LoaderCircle
+            className="size-8 animate-spin text-blue-600"
+            aria-hidden="true"
+          />
+
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            Membuka dashboard...
           </p>
         </div>
       </AuthPageShell>

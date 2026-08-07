@@ -44,6 +44,16 @@ export function getCSRFToken(): string {
   return decodeURIComponent(cookie.slice(prefix.length));
 }
 
+export function clearCSRFToken(): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.cookie =
+    `${encodeURIComponent(CSRF_COOKIE_NAME)}=; ` +
+    "Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+}
+
 export function csrfHeaders(): Record<string, string> {
   const token = getCSRFToken();
 
