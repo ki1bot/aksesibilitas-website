@@ -7,15 +7,13 @@ import {
   KeyRound,
   LayoutDashboard,
   LogOut,
-  Menu,
   Moon,
   Sun,
-  X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { Brand } from "@/components/brand";
@@ -40,14 +38,14 @@ const navigation = [
   },
   {
     href: "/dashboard#history",
-    label: "Riwayat pemeriksaan",
+    label: "Riwayat",
     description: "Buka hasil pemeriksaan sebelumnya",
     icon: History,
     hash: "#history",
   },
   {
     href: "/change-password",
-    label: "Ganti password",
+    label: "Password",
     description: "Perbarui keamanan akun",
     icon: KeyRound,
   },
@@ -80,8 +78,6 @@ export function AppShell({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { resolvedTheme, setTheme } = useTheme();
-
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const currentHash = useSyncExternalStore(
     subscribeToHashChange,
@@ -119,29 +115,6 @@ export function AppShell({
 
     router.replace(`/login?next=${encodeURIComponent(returnPath)}`);
   }, [queryClient, returnPath, router, userQuery.error]);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [menuOpen]);
 
   const logoutMutation = useMutation({
     mutationFn: logoutAccount,
@@ -195,14 +168,16 @@ export function AppShell({
     return pathname === item.href;
   }
 
-  const activeNavigation = navigation.find(navigationIsActive) ?? navigation[0];
-
   function handleLogout() {
     if (logoutMutation.isPending) {
       return;
     }
 
     logoutMutation.mutate();
+  }
+
+  function handleThemeToggle() {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
 
   if (userQuery.isPending) {
@@ -250,72 +225,52 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950 lg:flex lg:flex-col xl:w-72">
-        <div className="flex h-20 shrink-0 items-center border-b border-slate-100 px-5 dark:border-white/5 xl:px-6">
-          <Brand href="/dashboard" />
-        </div>
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/95">
+        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10">
+          <div className="shrink-0">
+            <Brand href="/dashboard" />
+          </div>
 
-        <nav
-          className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-6 xl:px-4"
-          aria-label="Navigasi utama"
-        >
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const active = navigationIsActive(item);
+          <nav
+            className="ml-6 hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex"
+            aria-label="Navigasi utama"
+          >
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const active = navigationIsActive(item);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "group flex items-start gap-3 rounded-2xl px-3.5 py-3 transition xl:px-4",
-                  active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white",
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                <span
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   className={cn(
-                    "grid size-9 shrink-0 place-items-center rounded-xl transition",
+                    "inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition xl:px-4",
                     active
-                      ? "bg-white/15"
-                      : "bg-slate-100 text-slate-500 group-hover:bg-white dark:bg-white/5 dark:text-slate-400 dark:group-hover:bg-white/10",
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white",
                   )}
+                  aria-current={active ? "page" : undefined}
                 >
-                  <Icon className="size-4.5" aria-hidden="true" />
-                </span>
+                  <Icon className="size-4" aria-hidden="true" />
 
-                <span className="min-w-0 pt-0.5">
-                  <span className="block text-sm font-bold">{item.label}</span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
-                  <span
-                    className={cn(
-                      "mt-0.5 block text-xs leading-5",
-                      active
-                        ? "text-white/75"
-                        : "text-slate-400 dark:text-slate-500",
-                    )}
-                  >
-                    {item.description}
-                  </span>
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="shrink-0 border-t border-slate-100 p-4 dark:border-white/5 xl:p-5">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-100 text-sm font-black text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div className="hidden min-w-0 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-3 dark:border-white/10 dark:bg-white/[0.04] sm:flex">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-100 text-xs font-black text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
                 {user.name.slice(0, 1).toUpperCase()}
               </span>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{user.name}</p>
+              <div className="hidden min-w-0 xl:block">
+                <p className="max-w-36 truncate text-xs font-bold">
+                  {user.name}
+                </p>
 
-                <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-0.5 max-w-36 truncate text-[11px] text-slate-500 dark:text-slate-400">
                   {user.email}
                 </p>
               </div>
@@ -323,186 +278,72 @@ export function AppShell({
 
             <button
               type="button"
+              onClick={handleThemeToggle}
+              className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+              aria-label="Ganti tema"
+              title="Ganti tema"
+            >
+              <Moon className="size-4.5 dark:hidden" aria-hidden="true" />
+
+              <Sun className="hidden size-4.5 dark:block" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
               onClick={handleLogout}
               disabled={logoutMutation.isPending}
-              className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-red-400/20 dark:hover:bg-red-400/10 dark:hover:text-red-300"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-red-400/20 dark:hover:bg-red-400/10 dark:hover:text-red-300 sm:px-3.5"
+              aria-label={
+                logoutMutation.isPending
+                  ? "Sedang keluar dari akun"
+                  : "Keluar dari akun"
+              }
             >
               <LogOut className="size-4" aria-hidden="true" />
 
-              {logoutMutation.isPending ? "Keluar..." : "Keluar"}
+              <span className="hidden md:inline">
+                {logoutMutation.isPending ? "Keluar..." : "Keluar"}
+              </span>
             </button>
           </div>
         </div>
-      </aside>
 
-      <div className="min-w-0 lg:pl-64 xl:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90">
-          <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMenuOpen(true)}
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:hidden"
-                aria-label="Buka navigasi"
-                aria-expanded={menuOpen}
-                aria-controls="mobile-navigation"
-              >
-                <Menu className="size-5" aria-hidden="true" />
-              </button>
-
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black sm:text-base">
-                  {activeNavigation.label}
-                </p>
-
-                <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 sm:block">
-                  {activeNavigation.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="hidden max-w-48 truncate rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-300 md:block">
-                {user.name}
-              </span>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                }
-                className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                aria-label={
-                  resolvedTheme === "dark"
-                    ? "Gunakan tema terang"
-                    : "Gunakan tema gelap"
-                }
-              >
-                {resolvedTheme === "dark" ? (
-                  <Sun className="size-4.5" aria-hidden="true" />
-                ) : (
-                  <Moon className="size-4.5" aria-hidden="true" />
-                )}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <main className="min-w-0">
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 xl:px-10">
-            {children}
-          </div>
-        </main>
-      </div>
-
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Tutup navigasi"
-          />
-
-          <aside
-            id="mobile-navigation"
-            className="relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col bg-white shadow-2xl dark:bg-slate-950"
+        <div className="border-t border-slate-100 dark:border-white/5 lg:hidden">
+          <nav
+            className="mx-auto flex w-full max-w-[1440px] gap-2 overflow-x-auto px-4 py-2.5 sm:px-6"
+            aria-label="Navigasi mobile"
           >
-            <div className="flex h-18 shrink-0 items-center justify-between border-b border-slate-100 px-4 dark:border-white/5">
-              <Brand href="/dashboard" />
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const active = navigationIsActive(item);
 
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                aria-label="Tutup navigasi"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <nav
-              className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-4"
-              aria-label="Navigasi mobile"
-            >
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const active = navigationIsActive(item);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={cn(
-                      "flex items-start gap-3 rounded-2xl px-3.5 py-3 transition",
-                      active
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15"
-                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/5",
-                    )}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <span
-                      className={cn(
-                        "grid size-9 shrink-0 place-items-center rounded-xl",
-                        active ? "bg-white/15" : "bg-slate-100 dark:bg-white/5",
-                      )}
-                    >
-                      <Icon className="size-4.5" aria-hidden="true" />
-                    </span>
-
-                    <span className="min-w-0 pt-0.5">
-                      <span className="block text-sm font-bold">
-                        {item.label}
-                      </span>
-
-                      <span
-                        className={cn(
-                          "mt-0.5 block text-xs leading-5",
-                          active
-                            ? "text-white/75"
-                            : "text-slate-400 dark:text-slate-500",
-                        )}
-                      >
-                        {item.description}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="shrink-0 border-t border-slate-100 p-4 dark:border-white/5">
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-white/[0.03]">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-100 text-sm font-black text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
-                    {user.name.slice(0, 1).toUpperCase()}
-                  </span>
-
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{user.name}</p>
-
-                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={logoutMutation.isPending}
-                  className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-sm font-bold transition",
+                    active
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/15"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
+                  )}
+                  aria-current={active ? "page" : undefined}
                 >
-                  <LogOut className="size-4" aria-hidden="true" />
+                  <Icon className="size-4" aria-hidden="true" />
 
-                  {logoutMutation.isPending ? "Keluar..." : "Keluar dari akun"}
-                </button>
-              </div>
-            </div>
-          </aside>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
-      )}
+      </header>
+
+      <main className="min-w-0">
+        <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 xl:px-10">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

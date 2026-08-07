@@ -47,6 +47,7 @@ function getSafeReturnPath() {
   }
 
   const searchParams = new URLSearchParams(window.location.search);
+
   const candidate = searchParams.get("next")?.trim() ?? "";
 
   if (
@@ -164,6 +165,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         eyebrow={registerMode ? "Buat akun" : "Masuk ke akun"}
         title="Memeriksa sesi"
         description="Kami sedang memeriksa apakah akun Anda masih memiliki sesi aktif."
+        showHomeLink
       >
         <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
           <LoaderCircle
@@ -192,6 +194,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           ? "Buat akun untuk menyimpan project, riwayat pemeriksaan, dan laporan Anda."
           : "Masukkan email dan password untuk melanjutkan pekerjaan Anda."
       }
+      showHomeLink
       footer={
         registerMode ? (
           <>
@@ -345,11 +348,13 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                 className="size-4 animate-spin"
                 aria-hidden="true"
               />
+
               {registerMode ? "Membuat akun..." : "Sedang masuk..."}
             </>
           ) : (
             <>
               {registerMode ? "Buat akun" : "Masuk"}
+
               <ArrowRight className="size-4" aria-hidden="true" />
             </>
           )}

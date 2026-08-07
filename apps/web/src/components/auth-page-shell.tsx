@@ -1,4 +1,10 @@
-import { BadgeCheck, FileCheck2, ScanSearch, ShieldCheck } from "lucide-react";
+import {
+  BadgeCheck,
+  FileCheck2,
+  House,
+  ScanSearch,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Brand } from "@/components/brand";
@@ -30,21 +36,36 @@ export function AuthPageShell({
   description,
   children,
   footer,
+  showHomeLink = false,
 }: Readonly<{
   eyebrow: string;
   title: string;
   description: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  showHomeLink?: boolean;
 }>) {
   return (
     <main className="relative min-h-dvh overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_8%,rgba(13,148,136,0.3),transparent_30%),radial-gradient(circle_at_92%_88%,rgba(217,70,239,0.14),transparent_30%)]" />
+
       <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:52px_52px]" />
 
       <div className="relative mx-auto grid min-h-dvh w-full max-w-[1440px] lg:grid-cols-[minmax(0,1.05fr)_minmax(440px,0.95fr)]">
         <section className="hidden min-w-0 flex-col justify-between px-10 py-10 lg:flex xl:px-16 xl:py-12">
-          <Brand className="[&_span_span:first-child]:text-white" />
+          <div className="flex items-center justify-between gap-4">
+            <Brand className="[&_span_span:first-child]:text-white" />
+
+            {showHomeLink && (
+              <Link
+                href="/"
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-slate-200 backdrop-blur transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                <House className="size-4" aria-hidden="true" />
+                Ke Beranda
+              </Link>
+            )}
+          </div>
 
           <div className="my-auto max-w-2xl py-12">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-blue-200 backdrop-blur">
@@ -101,12 +122,15 @@ export function AuthPageShell({
                 <Brand className="[&_span_span:first-child]:text-white" />
               </div>
 
-              <Link
-                href="/"
-                className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10 sm:text-sm"
-              >
-                Halaman utama
-              </Link>
+              {showHomeLink && (
+                <Link
+                  href="/"
+                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-xs font-bold text-slate-200 transition hover:bg-white/10 sm:px-4 sm:text-sm"
+                >
+                  <House className="size-4" aria-hidden="true" />
+                  Ke Beranda
+                </Link>
+              )}
             </div>
 
             <div className="rounded-[1.75rem] border border-white/10 bg-white p-5 text-slate-950 shadow-2xl shadow-black/30 sm:p-8 lg:p-9 dark:bg-slate-900 dark:text-white">
