@@ -119,26 +119,20 @@ func (handler *Handler) ChangePassword(
 		return
 	}
 
-	sessionHashes, err :=
-		handler.replacePasswordAndInvalidateSessions(
-			request.Context(),
-			user.ID,
-			passwordHash,
-		)
-
+	err = handler.replacePasswordAndInvalidateSessions(
+		request.Context(),
+		user.ID,
+		passwordHash,
+	)
 	if err != nil {
 		log.Printf(
 			"gagal mengganti password pengguna: %v",
 			err,
 		)
+
 		writeInternalError(writer)
 		return
 	}
-
-	handler.removeSessionCache(
-		request.Context(),
-		sessionHashes,
-	)
 
 	handler.clearCookies(writer)
 	writer.WriteHeader(http.StatusNoContent)

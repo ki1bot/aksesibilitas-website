@@ -6,10 +6,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 func (handler *Handler) storeResetToken(
@@ -17,56 +16,51 @@ func (handler *Handler) storeResetToken(
 	userID uuid.UUID,
 	tokenHash string,
 ) error {
-	userKey := handler.resetUserKey(userID)
-
-	previousHash, err := handler.redis.Get(
+	_, err := handler.pool.Exec(
 		ctx,
-		userKey,
-	).Result()
-
-	if err != nil &&
-		!errors.Is(err, redis.Nil) {
-		return err
-	}
-
-	pipeline := handler.redis.TxPipeline()
-
-	if previousHash != "" {
-		pipeline.Del(
-			ctx,
-			handler.resetTokenKey(previousHash),
-		)
-	}
-
-	pipeline.Set(
-		ctx,
-		handler.resetTokenKey(tokenHash),
-		userID.String(),
-		handler.cfg.PasswordResetTTL,
-	)
-
-	pipeline.Set(
-		ctx,
-		userKey,
+		`
+			INSERT INTO password_reset_tokens (
+				token_hash,
+				user_id,
+				expires_at
+			)
+			VALUES (
+				$1,
+				$2,
+				$3
+			)
+			ON CONFLICT (user_id)
+			DO UPDATE SET
+				token_hash = EXCLUDED.token_hash,
+				expires_at = EXCLUDED.expires_at,
+				created_at = NOW()
+		`,
 		tokenHash,
-		handler.cfg.PasswordResetTTL,
+		userID,
+		time.Now().Add(handler.cfg.PasswordResetTTL),
 	)
 
-	_, err = pipeline.Exec(ctx)
 	return err
 }
 
-func (handler *Handler) resetTokenKey(
+func (handler *Handler) consumeResetToken(
+	ctx context.Context,
 	tokenHash string,
-) string {
-	return "password-reset:" + tokenHash
-}
+) (uuid.UUID, error) {
+	var userID uuid.UUID
 
-func (handler *Handler) resetUserKey(
-	userID uuid.UUID,
-) string {
-	return "password-reset-user:" +
-		userID.String()
+	err := handler.pool.QueryRow(
+		ctx,
+		`
+			DELETE FROM password_reset_tokens
+			WHERE token_hash = $1
+			  AND expires_at > NOW()
+			RETURNING user_id
+		`,
+		tokenHash,
+	).Scan(&userID)
+
+	return userID, err
 }
 
 func randomToken(

@@ -7,8 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/ki1bot/aksesibilitas-website/internal/auth"
 )
@@ -88,12 +87,12 @@ func (handler *Handler) ResetPassword(
 
 	tokenHash := hashToken(input.Token)
 
-	userIDValue, err := handler.redis.GetDel(
+	userID, err := handler.consumeResetToken(
 		request.Context(),
-		handler.resetTokenKey(tokenHash),
-	).Result()
+		tokenHash,
+	)
 
-	if errors.Is(err, redis.Nil) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		writeError(
 			writer,
 			http.StatusBadRequest,
@@ -108,42 +107,20 @@ func (handler *Handler) ResetPassword(
 		return
 	}
 
-	userID, err := uuid.Parse(userIDValue)
-	if err != nil {
-		writeError(
-			writer,
-			http.StatusBadRequest,
-			"invalid_token",
-			"Tautan reset password tidak valid atau sudah kedaluwarsa",
-		)
-		return
-	}
-
-	sessionHashes, err :=
-		handler.replacePasswordAndInvalidateSessions(
-			request.Context(),
-			userID,
-			passwordHash,
-		)
-
+	err = handler.replacePasswordAndInvalidateSessions(
+		request.Context(),
+		userID,
+		passwordHash,
+	)
 	if err != nil {
 		log.Printf(
 			"gagal mengganti password dari token reset: %v",
 			err,
 		)
+
 		writeInternalError(writer)
 		return
 	}
-
-	_ = handler.redis.Del(
-		request.Context(),
-		handler.resetUserKey(userID),
-	).Err()
-
-	handler.removeSessionCache(
-		request.Context(),
-		sessionHashes,
-	)
 
 	handler.clearCookies(writer)
 	writer.WriteHeader(http.StatusNoContent)

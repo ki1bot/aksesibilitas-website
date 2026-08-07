@@ -33,6 +33,9 @@ const nextExecutable = resolve(
 const developmentEnvironment = {
   ...process.env,
   API_ADDR: "127.0.0.1:8080",
+  SCANNER_ADDR: "127.0.0.1:8081",
+  SCANNER_URL: "http://127.0.0.1:8081",
+  SCANNER_TOKEN: process.env.SCANNER_TOKEN ?? "aksescheck-local-scanner-token",
   WEB_ORIGIN: "http://127.0.0.1:3000",
   NEXT_PUBLIC_API_URL: "http://127.0.0.1:8080/api/v1",
   NEXT_PUBLIC_CSRF_COOKIE_NAME: "aksesibilitaswebsite_session_csrf",
@@ -54,6 +57,7 @@ function build(name, output, packagePath) {
 
   if (result.error) {
     console.error(`[DEV] Gagal menjalankan Go untuk ${name}:`, result.error);
+
     process.exit(1);
   }
 
@@ -99,6 +103,7 @@ function startProcess(name, command, args) {
     if (!shuttingDown) {
       if (code !== 0 && code !== null) {
         console.error(`[${name}] berhenti dengan exit code ${code}`);
+
         exitCode = code;
       } else if (signal) {
         console.error(`[${name}] berhenti karena signal ${signal}`);
@@ -158,6 +163,7 @@ function shutdown(fromConsoleInterrupt) {
   forceShutdownTimer = setTimeout(() => {
     if (processes.size > 0) {
       console.log("[DEV] Memaksa service yang belum berhenti...");
+
       forceKillChildren();
     }
   }, 8000);
@@ -199,9 +205,9 @@ process.on("unhandledRejection", (error) => {
   shutdown(false);
 });
 
-startProcess("API", apiExecutable, []);
-
 startProcess("SCANNER", scannerExecutable, []);
+
+startProcess("API", apiExecutable, []);
 
 startProcess("WEB", process.execPath, [
   nextExecutable,

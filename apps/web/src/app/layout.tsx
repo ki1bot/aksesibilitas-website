@@ -27,6 +27,17 @@ export const metadata: Metadata = {
     "aksesibilitas digital",
     "accessibility audit",
   ],
+  icons: {
+    icon: [
+      {
+        url: "/assets/logoKibot.png",
+        type: "image/png",
+        sizes: "500x500",
+      },
+    ],
+    shortcut: "/assets/logoKibot.png",
+    apple: "/assets/logoKibot.png",
+  },
 };
 
 export default function RootLayout({

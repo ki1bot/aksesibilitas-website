@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,12 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	db "github.com/ki1bot/aksesibilitas-website/internal/database/db"
-	taskqueue "github.com/ki1bot/aksesibilitas-website/internal/queue"
 	"github.com/ki1bot/aksesibilitas-website/internal/scanner"
 )
 
@@ -36,42 +33,17 @@ func NewScanHandler(
 	}
 }
 
-func (handler *ScanHandler) ProcessTask(
+func (handler *ScanHandler) Process(
 	ctx context.Context,
-	task *asynq.Task,
+	scanID uuid.UUID,
 ) error {
-	var payload taskqueue.AccessibilityScanPayload
-
-	if err := json.Unmarshal(
-		task.Payload(),
-		&payload,
-	); err != nil {
-		return fmt.Errorf(
-			"payload task tidak valid: %v: %w",
-			err,
-			asynq.SkipRetry,
-		)
-	}
-
-	scanID, err := uuid.Parse(payload.ScanID)
-	if err != nil {
-		return fmt.Errorf(
-			"scan ID tidak valid: %v: %w",
-			err,
-			asynq.SkipRetry,
-		)
-	}
-
 	currentScan, err := handler.queries.GetScanByID(
 		ctx,
 		scanID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf(
-				"scan tidak ditemukan: %w",
-				asynq.SkipRetry,
-			)
+			return errors.New("scan tidak ditemukan")
 		}
 
 		return fmt.Errorf(
@@ -120,11 +92,10 @@ func (handler *ScanHandler) ProcessTask(
 	close(watchDone)
 
 	if scanErr != nil {
-		latestScan, latestErr :=
-			handler.queries.GetScanByID(
-				context.Background(),
-				scanID,
-			)
+		latestScan, latestErr := handler.queries.GetScanByID(
+			context.Background(),
+			scanID,
+		)
 
 		if latestErr == nil &&
 			latestScan.Status == db.ScanStatusCancelled {
@@ -165,7 +136,10 @@ func (handler *ScanHandler) ProcessTask(
 
 	queries := handler.queries.WithTx(transaction)
 
-	latestScan, err := queries.GetScanByID(ctx, scanID)
+	latestScan, err := queries.GetScanByID(
+		ctx,
+		scanID,
+	)
 	if err != nil {
 		return err
 	}
@@ -226,20 +200,19 @@ func (handler *ScanHandler) ProcessTask(
 			minorCount++
 		}
 
-		violation, createErr :=
-			queries.CreateViolation(
-				ctx,
-				db.CreateViolationParams{
-					ID:            uuid.New(),
-					ScannedPageID: page.ID,
-					RuleID:        resultViolation.ID,
-					Impact:        impact,
-					Description:   resultViolation.Description,
-					Help:          resultViolation.Help,
-					HelpURL:       resultViolation.HelpURL,
-					Tags:          resultViolation.Tags,
-				},
-			)
+		violation, createErr := queries.CreateViolation(
+			ctx,
+			db.CreateViolationParams{
+				ID:            uuid.New(),
+				ScannedPageID: page.ID,
+				RuleID:        resultViolation.ID,
+				Impact:        impact,
+				Description:   resultViolation.Description,
+				Help:          resultViolation.Help,
+				HelpURL:       resultViolation.HelpURL,
+				Tags:          resultViolation.Tags,
+			},
+		)
 		if createErr != nil {
 			return fmt.Errorf(
 				"gagal menyimpan violation %s: %w",
@@ -249,17 +222,16 @@ func (handler *ScanHandler) ProcessTask(
 		}
 
 		for _, resultNode := range resultViolation.Nodes {
-			_, nodeErr :=
-				queries.CreateViolationNode(
-					ctx,
-					db.CreateViolationNodeParams{
-						ID:             uuid.New(),
-						ViolationID:    violation.ID,
-						HTML:           resultNode.HTML,
-						Target:         resultNode.Target,
-						FailureSummary: resultNode.FailureSummary,
-					},
-				)
+			_, nodeErr := queries.CreateViolationNode(
+				ctx,
+				db.CreateViolationNodeParams{
+					ID:             uuid.New(),
+					ViolationID:    violation.ID,
+					HTML:           resultNode.HTML,
+					Target:         resultNode.Target,
+					FailureSummary: resultNode.FailureSummary,
+				},
+			)
 			if nodeErr != nil {
 				return fmt.Errorf(
 					"gagal menyimpan node violation: %w",
@@ -329,15 +301,13 @@ func (handler *ScanHandler) watchCancellation(
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			currentScan, err :=
-				handler.queries.GetScanByID(
-					context.Background(),
-					scanID,
-				)
+			currentScan, err := handler.queries.GetScanByID(
+				context.Background(),
+				scanID,
+			)
 
 			if err == nil &&
-				currentScan.Status ==
-					db.ScanStatusCancelled {
+				currentScan.Status == db.ScanStatusCancelled {
 				cancel()
 				return
 			}

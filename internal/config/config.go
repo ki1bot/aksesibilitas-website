@@ -9,13 +9,15 @@ import (
 	"time"
 )
 
+const localScannerToken = "aksescheck-local-scanner-token"
+
 type Config struct {
 	AppEnv            string
 	APIAddr           string
+	ScannerAddr       string
+	ScannerURL        string
+	ScannerToken      string
 	DatabaseURL       string
-	RedisAddr         string
-	RedisPassword     string
-	RedisDB           int
 	WebOrigin         string
 	SessionCookieName string
 	SessionTTL        time.Duration
@@ -26,9 +28,7 @@ type Config struct {
 	SMTPPassword      string
 	SMTPFromName      string
 	SMTPFromEmail     string
-	ScanQueue         string
 	ScanTimeout       time.Duration
-	WorkerConcurrency int
 	ChromePath        string
 }
 
@@ -37,12 +37,12 @@ func Load() (Config, error) {
 
 	cfg := Config{
 		AppEnv:            getString("APP_ENV", "development"),
-		APIAddr:           getString("API_ADDR", ":8080"),
+		APIAddr:           getListenAddress("API_ADDR", "127.0.0.1:8080"),
+		ScannerAddr:       getListenAddress("SCANNER_ADDR", "127.0.0.1:8081"),
+		ScannerURL:        getString("SCANNER_URL", "http://127.0.0.1:8081"),
+		ScannerToken:      getString("SCANNER_TOKEN", localScannerToken),
 		DatabaseURL:       strings.TrimSpace(os.Getenv("DATABASE_URL")),
-		RedisAddr:         getString("REDIS_ADDR", "localhost:6379"),
-		RedisPassword:     os.Getenv("REDIS_PASSWORD"),
-		RedisDB:           getInt("REDIS_DB", 0),
-		WebOrigin:         getString("WEB_ORIGIN", "http://localhost:3000"),
+		WebOrigin:         getString("WEB_ORIGIN", "http://127.0.0.1:3000"),
 		SessionCookieName: getString("SESSION_COOKIE_NAME", "aksescheck_session"),
 		SessionTTL:        getDuration("SESSION_TTL", 7*24*time.Hour),
 		PasswordResetTTL:  getDuration("PASSWORD_RESET_TTL", 30*time.Minute),
@@ -52,9 +52,7 @@ func Load() (Config, error) {
 		SMTPPassword:      os.Getenv("SMTP_PASSWORD"),
 		SMTPFromName:      getString("SMTP_FROM_NAME", "AksesCheck ID"),
 		SMTPFromEmail:     strings.TrimSpace(os.Getenv("SMTP_FROM_EMAIL")),
-		ScanQueue:         getString("SCAN_QUEUE", "scanner"),
 		ScanTimeout:       getDuration("SCAN_TIMEOUT", 60*time.Second),
-		WorkerConcurrency: getInt("WORKER_CONCURRENCY", 2),
 		ChromePath:        strings.TrimSpace(os.Getenv("CHROME_PATH")),
 	}
 
@@ -81,8 +79,18 @@ func Load() (Config, error) {
 		return Config{}, errors.New("SMTP_PORT tidak valid")
 	}
 
-	if cfg.WorkerConcurrency < 1 {
-		return Config{}, errors.New("WORKER_CONCURRENCY minimal satu")
+	if cfg.ScanTimeout < 10*time.Second ||
+		cfg.ScanTimeout > 5*time.Minute {
+		return Config{}, errors.New(
+			"SCAN_TIMEOUT harus antara 10 detik dan 5 menit",
+		)
+	}
+
+	if cfg.AppEnv == "production" &&
+		cfg.ScannerToken == localScannerToken {
+		return Config{}, errors.New(
+			"SCANNER_TOKEN production wajib diganti",
+		)
 	}
 
 	return cfg, nil
@@ -96,8 +104,10 @@ func loadEnvFile(path string) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
+
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -109,6 +119,7 @@ func loadEnvFile(path string) {
 
 		key = strings.TrimSpace(key)
 		value = strings.TrimSpace(value)
+
 		if key == "" {
 			continue
 		}
@@ -133,8 +144,25 @@ func loadEnvFile(path string) {
 	}
 }
 
-func getString(key, fallback string) string {
+func getListenAddress(
+	key string,
+	fallback string,
+) string {
+	port := strings.TrimSpace(os.Getenv("PORT"))
+
+	if port != "" {
+		return ":" + strings.TrimPrefix(port, ":")
+	}
+
+	return getString(key, fallback)
+}
+
+func getString(
+	key string,
+	fallback string,
+) string {
 	value := strings.TrimSpace(os.Getenv(key))
+
 	if value == "" {
 		return fallback
 	}
@@ -142,8 +170,12 @@ func getString(key, fallback string) string {
 	return value
 }
 
-func getInt(key string, fallback int) int {
+func getInt(
+	key string,
+	fallback int,
+) int {
 	value := strings.TrimSpace(os.Getenv(key))
+
 	if value == "" {
 		return fallback
 	}
@@ -156,8 +188,12 @@ func getInt(key string, fallback int) int {
 	return parsed
 }
 
-func getDuration(key string, fallback time.Duration) time.Duration {
+func getDuration(
+	key string,
+	fallback time.Duration,
+) time.Duration {
 	value := strings.TrimSpace(os.Getenv(key))
+
 	if value == "" {
 		return fallback
 	}

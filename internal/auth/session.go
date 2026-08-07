@@ -7,24 +7,26 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/ki1bot/aksesibilitas-website/internal/database/db"
 )
 
-var ErrUnauthenticated = errors.New("sesi tidak valid atau sudah berakhir")
-var ErrInvalidCSRF = errors.New("token CSRF tidak valid")
+var ErrUnauthenticated = errors.New(
+	"sesi tidak valid atau sudah berakhir",
+)
+
+var ErrInvalidCSRF = errors.New(
+	"token CSRF tidak valid",
+)
 
 type Manager struct {
 	queries    *db.Queries
-	redis      *redis.Client
 	cookieName string
 	ttl        time.Duration
 	secure     bool
@@ -44,23 +46,14 @@ type Tokens struct {
 	ExpiresAt    time.Time
 }
 
-type cachedSession struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	CSRFHash  string    `json:"csrf_hash"`
-	ExpiresAt time.Time `json:"expires_at"`
-}
-
 func NewManager(
 	queries *db.Queries,
-	redisClient *redis.Client,
 	cookieName string,
 	ttl time.Duration,
 	secure bool,
 ) *Manager {
 	return &Manager{
 		queries:    queries,
-		redis:      redisClient,
 		cookieName: cookieName,
 		ttl:        ttl,
 		secure:     secure,
@@ -85,7 +78,7 @@ func (manager *Manager) Create(
 
 	expiresAt := time.Now().Add(manager.ttl)
 
-	session, err := manager.queries.CreateSession(
+	_, err = manager.queries.CreateSession(
 		ctx,
 		db.CreateSessionParams{
 			ID:        uuid.New(),
@@ -98,14 +91,6 @@ func (manager *Manager) Create(
 		},
 	)
 	if err != nil {
-		return Tokens{}, err
-	}
-
-	if err := manager.cacheSession(ctx, session); err != nil {
-		_ = manager.queries.DeleteSessionByTokenHash(
-			ctx,
-			session.TokenHash,
-		)
 		return Tokens{}, err
 	}
 
@@ -127,7 +112,10 @@ func (manager *Manager) Authenticate(
 
 	tokenHash := hashToken(cookie.Value)
 
-	session, err := manager.loadSession(ctx, tokenHash)
+	session, err := manager.queries.GetSessionByTokenHash(
+		ctx,
+		tokenHash,
+	)
 	if err != nil {
 		return Principal{}, ErrUnauthenticated
 	}
@@ -204,14 +192,12 @@ func (manager *Manager) DestroyByHash(
 		ctx,
 		tokenHash,
 	)
+
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
 
-	return manager.redis.Del(
-		ctx,
-		manager.cacheKey(tokenHash),
-	).Err()
+	return nil
 }
 
 func (manager *Manager) SetCookies(
@@ -281,79 +267,6 @@ func (manager *Manager) ClearCookie(
 	)
 }
 
-func (manager *Manager) loadSession(
-	ctx context.Context,
-	tokenHash string,
-) (db.Session, error) {
-	value, err := manager.redis.Get(
-		ctx,
-		manager.cacheKey(tokenHash),
-	).Bytes()
-
-	if err == nil {
-		var cached cachedSession
-
-		if json.Unmarshal(value, &cached) == nil {
-			return db.Session{
-				ID:        cached.ID,
-				UserID:    cached.UserID,
-				TokenHash: tokenHash,
-				CSRFHash:  cached.CSRFHash,
-				ExpiresAt: cached.ExpiresAt,
-			}, nil
-		}
-	}
-
-	session, err := manager.queries.GetSessionByTokenHash(
-		ctx,
-		tokenHash,
-	)
-	if err != nil {
-		return db.Session{}, err
-	}
-
-	if err := manager.cacheSession(ctx, session); err != nil {
-		return db.Session{}, err
-	}
-
-	return session, nil
-}
-
-func (manager *Manager) cacheSession(
-	ctx context.Context,
-	session db.Session,
-) error {
-	payload, err := json.Marshal(
-		cachedSession{
-			ID:        session.ID,
-			UserID:    session.UserID,
-			CSRFHash:  session.CSRFHash,
-			ExpiresAt: session.ExpiresAt,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	ttl := time.Until(session.ExpiresAt)
-	if ttl <= 0 {
-		return ErrUnauthenticated
-	}
-
-	return manager.redis.Set(
-		ctx,
-		manager.cacheKey(session.TokenHash),
-		payload,
-		ttl,
-	).Err()
-}
-
-func (manager *Manager) cacheKey(
-	tokenHash string,
-) string {
-	return "session:" + tokenHash
-}
-
 func randomToken(size int) (string, error) {
 	value := make([]byte, size)
 
@@ -366,5 +279,6 @@ func randomToken(size int) (string, error) {
 
 func hashToken(token string) string {
 	hash := sha256.Sum256([]byte(token))
+
 	return hex.EncodeToString(hash[:])
 }

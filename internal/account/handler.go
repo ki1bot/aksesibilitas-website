@@ -5,15 +5,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/ki1bot/aksesibilitas-website/internal/config"
 )
 
 type Handler struct {
-	cfg   config.Config
-	pool  *pgxpool.Pool
-	redis *redis.Client
+	cfg  config.Config
+	pool *pgxpool.Pool
 }
 
 type forgotPasswordRequest struct {
@@ -56,12 +54,10 @@ type authenticatedUser struct {
 func NewHandler(
 	cfg config.Config,
 	pool *pgxpool.Pool,
-	redisClient *redis.Client,
 ) *Handler {
 	return &Handler{
-		cfg:   cfg,
-		pool:  pool,
-		redis: redisClient,
+		cfg:  cfg,
+		pool: pool,
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 
 	db "github.com/ki1bot/aksesibilitas-website/internal/database/db"
-	taskqueue "github.com/ki1bot/aksesibilitas-website/internal/queue"
 	"github.com/ki1bot/aksesibilitas-website/internal/security"
 )
 
@@ -58,7 +57,10 @@ func (server *Server) listScans(
 		"limit",
 	); rawLimit != "" {
 		parsed, err := strconv.Atoi(rawLimit)
-		if err == nil && parsed >= 1 && parsed <= 100 {
+
+		if err == nil &&
+			parsed >= 1 &&
+			parsed <= 100 {
 			resultLimit = int32(parsed)
 		}
 	}
@@ -77,8 +79,9 @@ func (server *Server) listScans(
 			resultLimit,
 		)
 	} else {
-		projectID, parseErr :=
-			uuid.Parse(projectValue)
+		projectID, parseErr := uuid.Parse(
+			projectValue,
+		)
 
 		if parseErr != nil {
 			writeError(
@@ -90,15 +93,14 @@ func (server *Server) listScans(
 			return
 		}
 
-		scans, err =
-			server.queries.ListScansByProject(
-				request.Context(),
-				db.ListScansByProjectParams{
-					ProjectID:   projectID,
-					UserID:      principal.User.ID,
-					ResultLimit: resultLimit,
-				},
-			)
+		scans, err = server.queries.ListScansByProject(
+			request.Context(),
+			db.ListScansByProjectParams{
+				ProjectID:   projectID,
+				UserID:      principal.User.ID,
+				ResultLimit: resultLimit,
+			},
+		)
 	}
 
 	if err != nil {
@@ -106,7 +108,11 @@ func (server *Server) listScans(
 		return
 	}
 
-	writeJSON(writer, http.StatusOK, scans)
+	writeJSON(
+		writer,
+		http.StatusOK,
+		scans,
+	)
 }
 
 func (server *Server) createScan(
@@ -156,16 +162,15 @@ func (server *Server) createScan(
 		return
 	}
 
-	count, err :=
-		server.queries.CountRecentScansByUser(
-			request.Context(),
-			db.CountRecentScansByUserParams{
-				UserID: principal.User.ID,
-				SinceTime: time.Now().Add(
-					-time.Minute,
-				),
-			},
-		)
+	count, err := server.queries.CountRecentScansByUser(
+		request.Context(),
+		db.CountRecentScansByUserParams{
+			UserID: principal.User.ID,
+			SinceTime: time.Now().Add(
+				-time.Minute,
+			),
+		},
+	)
 	if err != nil {
 		writeInternalError(writer)
 		return
@@ -181,11 +186,10 @@ func (server *Server) createScan(
 		return
 	}
 
-	normalizedURL, err :=
-		security.ValidatePublicHTTPURL(
-			request.Context(),
-			input.URL,
-		)
+	normalizedURL, err := security.ValidatePublicHTTPURL(
+		request.Context(),
+		input.URL,
+	)
 	if err != nil {
 		writeError(
 			writer,
@@ -221,14 +225,13 @@ func (server *Server) createScan(
 		return
 	}
 
-	manualReview, err :=
-		queries.CreateManualReview(
-			request.Context(),
-			db.CreateManualReviewParams{
-				ID:     uuid.New(),
-				ScanID: scan.ID,
-			},
-		)
+	manualReview, err := queries.CreateManualReview(
+		request.Context(),
+		db.CreateManualReviewParams{
+			ID:     uuid.New(),
+			ScanID: scan.ID,
+		},
+	)
 	if err != nil {
 		writeInternalError(writer)
 		return
@@ -258,37 +261,10 @@ func (server *Server) createScan(
 		return
 	}
 
-	task, options, err :=
-		taskqueue.NewAccessibilityScanTask(
-			scan.ID.String(),
-			scan.URL,
-			server.cfg.ScanQueue,
-			server.cfg.ScanTimeout,
-		)
-	if err != nil {
-		server.failQueuedScan(
-			request.Context(),
-			scan.ID,
-			"Gagal membuat pekerjaan scan",
-		)
-
-		writeInternalError(writer)
-		return
-	}
-
-	if _, err := server.queueClient.Enqueue(
-		task,
-		options...,
-	); err != nil {
-		server.failQueuedScan(
-			request.Context(),
-			scan.ID,
-			"Gagal memasukkan scan ke antrean",
-		)
-
-		writeInternalError(writer)
-		return
-	}
+	scan = server.runQueuedScan(
+		request.Context(),
+		scan,
+	)
 
 	writeJSON(
 		writer,
@@ -326,7 +302,11 @@ func (server *Server) getScan(
 		return
 	}
 
-	writeJSON(writer, http.StatusOK, scan)
+	writeJSON(
+		writer,
+		http.StatusOK,
+		scan,
+	)
 }
 
 func (server *Server) cancelScan(
@@ -358,7 +338,11 @@ func (server *Server) cancelScan(
 		return
 	}
 
-	writeJSON(writer, http.StatusOK, scan)
+	writeJSON(
+		writer,
+		http.StatusOK,
+		scan,
+	)
 }
 
 func (server *Server) retryScan(
@@ -432,39 +416,16 @@ func (server *Server) retryScan(
 		return
 	}
 
-	task, options, err :=
-		taskqueue.NewAccessibilityScanTask(
-			scan.ID.String(),
-			scan.URL,
-			server.cfg.ScanQueue,
-			server.cfg.ScanTimeout,
-		)
-	if err != nil {
-		server.failQueuedScan(
-			request.Context(),
-			scan.ID,
-			"Gagal membuat pekerjaan retry",
-		)
+	scan = server.runQueuedScan(
+		request.Context(),
+		scan,
+	)
 
-		writeInternalError(writer)
-		return
-	}
-
-	if _, err := server.queueClient.Enqueue(
-		task,
-		options...,
-	); err != nil {
-		server.failQueuedScan(
-			request.Context(),
-			scan.ID,
-			"Gagal memasukkan retry ke antrean",
-		)
-
-		writeInternalError(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, scan)
+	writeJSON(
+		writer,
+		http.StatusOK,
+		scan,
+	)
 }
 
 func (server *Server) deleteScan(
@@ -499,12 +460,76 @@ func (server *Server) deleteScan(
 	writer.WriteHeader(http.StatusNoContent)
 }
 
+func (server *Server) runQueuedScan(
+	ctx context.Context,
+	scan db.Scan,
+) db.Scan {
+	err := server.executeScan(
+		ctx,
+		scan.ID,
+	)
+	if err != nil {
+		log.Printf(
+			"scanner gagal memproses scan %s: %v",
+			scan.ID,
+			err,
+		)
+
+		failContext, cancelFail := context.WithTimeout(
+			context.Background(),
+			5*time.Second,
+		)
+
+		server.failQueuedScan(
+			failContext,
+			scan.ID,
+			"Layanan scanner tidak dapat menyelesaikan pemindaian",
+		)
+
+		cancelFail()
+	}
+
+	refreshContext, cancelRefresh := context.WithTimeout(
+		context.Background(),
+		5*time.Second,
+	)
+	defer cancelRefresh()
+
+	latestScan, refreshErr := server.queries.GetScanByID(
+		refreshContext,
+		scan.ID,
+	)
+	if refreshErr == nil {
+		return latestScan
+	}
+
+	return scan
+}
+
 func (server *Server) failQueuedScan(
 	ctx context.Context,
 	scanID uuid.UUID,
 	message string,
 ) {
-	_, err := server.queries.FailScan(
+	currentScan, err := server.queries.GetScanByID(
+		ctx,
+		scanID,
+	)
+	if err != nil {
+		log.Printf(
+			"gagal mengambil status scan %s: %v",
+			scanID,
+			err,
+		)
+		return
+	}
+
+	if currentScan.Status != db.ScanStatusQueued &&
+		currentScan.Status != db.ScanStatusRunning {
+		return
+	}
+
+	_, err = server.queries.FailScan(
 		ctx,
 		scanID,
 		message,
