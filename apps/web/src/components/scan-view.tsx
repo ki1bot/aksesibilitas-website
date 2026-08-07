@@ -98,6 +98,10 @@ export function ScanView({ scanId }: { scanId: string }) {
     enabled: completed,
   });
 
+  function showMutationError(error: unknown) {
+    toast.error(error instanceof Error ? error.message : "Permintaan gagal");
+  }
+
   const cancelMutation = useMutation({
     mutationFn: () => cancelScan(scanId),
     onSuccess: async () => {
@@ -185,10 +189,6 @@ export function ScanView({ scanId }: { scanId: string }) {
     ];
   }, [scan]);
 
-  function showMutationError(error: unknown) {
-    toast.error(error instanceof Error ? error.message : "Permintaan gagal");
-  }
-
   function handleDelete() {
     const confirmed = window.confirm(
       "Scan, violation, pemeriksaan manual, dan laporan terkait akan dihapus permanen. Lanjutkan?",
@@ -203,7 +203,7 @@ export function ScanView({ scanId }: { scanId: string }) {
     <AppShell>
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+        className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
         Kembali ke dashboard
@@ -212,7 +212,7 @@ export function ScanView({ scanId }: { scanId: string }) {
       {scanQuery.isPending ? (
         <LoadingState label="Memuat data scan" />
       ) : scanQuery.error || !scan ? (
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           <ErrorState
             message={
               scanQuery.error instanceof Error
@@ -223,10 +223,10 @@ export function ScanView({ scanId }: { scanId: string }) {
         </div>
       ) : (
         <>
-          <section className="mt-7 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="grid gap-8 p-6 sm:p-8 xl:grid-cols-[1fr_auto] xl:items-center">
+          <section className="mt-5 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm sm:mt-7 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="grid min-w-0 gap-7 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10 lg:p-8">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                   <StatusBadge status={scan.status} />
 
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
@@ -235,7 +235,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                   </span>
                 </div>
 
-                <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl">
+                <h1 className="mt-4 break-words text-2xl font-black tracking-tight sm:mt-5 sm:text-3xl lg:text-4xl">
                   {scan.page_title || "Pemeriksaan aksesibilitas"}
                 </h1>
 
@@ -243,18 +243,18 @@ export function ScanView({ scanId }: { scanId: string }) {
                   href={scan.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 block break-all text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                  className="mt-3 block break-all text-sm font-semibold leading-6 text-blue-600 hover:underline dark:text-blue-400"
                 >
                   {scan.url}
                 </a>
 
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
                   {(scan.status === "queued" || scan.status === "running") && (
                     <button
                       type="button"
                       onClick={() => cancelMutation.mutate()}
                       disabled={cancelMutation.isPending}
-                      className="inline-flex h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/15"
                     >
                       <Ban className="size-4" aria-hidden="true" />
                       {cancelMutation.isPending ? "Membatalkan..." : "Batalkan"}
@@ -267,7 +267,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                       type="button"
                       onClick={() => retryMutation.mutate()}
                       disabled={retryMutation.isPending}
-                      className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <RefreshCcw className="size-4" aria-hidden="true" />
                       {retryMutation.isPending ? "Mengirim..." : "Ulangi scan"}
@@ -278,7 +278,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                     type="button"
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
-                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
                   >
                     <Trash2 className="size-4" aria-hidden="true" />
                     {deleteMutation.isPending ? "Menghapus..." : "Hapus"}
@@ -288,19 +288,21 @@ export function ScanView({ scanId }: { scanId: string }) {
                 {scan.error_message && (
                   <div
                     role="alert"
-                    className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+                    className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700 sm:mt-6 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
                   >
                     {scan.error_message}
                   </div>
                 )}
               </div>
 
-              <ScoreGauge score={scan.automated_score} />
+              <div className="flex justify-center lg:justify-end">
+                <ScoreGauge score={scan.automated_score} />
+              </div>
             </div>
 
             {(scan.status === "queued" || scan.status === "running") && (
-              <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 dark:border-white/10 dark:bg-white/[0.02] sm:px-8">
-                <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 dark:border-white/10 dark:bg-white/[0.02] sm:px-7 lg:px-8">
+                <div className="flex flex-col gap-1.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <span className="font-bold">
                     {scan.status === "queued"
                       ? "Menunggu worker tersedia"
@@ -321,7 +323,7 @@ export function ScanView({ scanId }: { scanId: string }) {
 
           {completed && (
             <>
-              <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <section className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
                 {[
                   {
                     label: "Kritis",
@@ -342,28 +344,30 @@ export function ScanView({ scanId }: { scanId: string }) {
                 ].map((item) => (
                   <article
                     key={item.label}
-                    className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-5 dark:border-white/10 dark:bg-white/[0.03]"
                   >
-                    <strong className="text-3xl font-black">
+                    <strong className="text-2xl font-black sm:text-3xl">
                       {item.value}
                     </strong>
 
-                    <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-xs font-semibold leading-5 text-slate-500 sm:text-sm dark:text-slate-400">
                       Dampak {item.label}
                     </p>
                   </article>
                 ))}
               </section>
 
-              <section className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-                <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
-                  <h2 className="text-xl font-black">Distribusi pelanggaran</h2>
+              <section className="mt-5 grid gap-5 sm:mt-6 sm:gap-6 lg:grid-cols-2">
+                <article className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-white/[0.03]">
+                  <h2 className="text-lg font-black sm:text-xl">
+                    Distribusi pelanggaran
+                  </h2>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Berdasarkan tingkat dampak axe-core
                   </p>
 
-                  <div className="mt-6 h-64">
+                  <div className="mt-5 h-64 min-w-0 sm:mt-6 sm:h-72">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData}>
                         <CartesianGrid
@@ -386,6 +390,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                           allowDecimals={false}
                           axisLine={false}
                           tickLine={false}
+                          width={32}
                           tick={{
                             fill: "var(--chart-label)",
                             fontSize: 12,
@@ -414,8 +419,8 @@ export function ScanView({ scanId }: { scanId: string }) {
                   </div>
                 </article>
 
-                <article className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-xl">
-                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-300">
+                <article className="rounded-[1.75rem] bg-slate-950 p-5 text-white shadow-xl sm:p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-300 sm:text-sm">
                     Laporan audit
                   </p>
 
@@ -428,16 +433,16 @@ export function ScanView({ scanId }: { scanId: string }) {
                     snippet, selector, saran perbaikan, dan checklist manual.
                   </p>
 
-                  <dl className="mt-6 grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <dl className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 sm:p-4">
                       <dt className="text-xs text-slate-400">Durasi scan</dt>
 
-                      <dd className="mt-1 font-bold">
+                      <dd className="mt-1 break-words font-bold">
                         {formatDuration(scan.duration_ms)}
                       </dd>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 sm:p-4">
                       <dt className="text-xs text-slate-400">
                         Total violation
                       </dt>
@@ -446,12 +451,12 @@ export function ScanView({ scanId }: { scanId: string }) {
                     </div>
                   </dl>
 
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="mt-5 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3">
                     <button
                       type="button"
                       onClick={() => reportMutation.mutate("pdf")}
                       disabled={reportMutation.isPending}
-                      className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <FileText className="size-4" aria-hidden="true" />
                       Unduh PDF
@@ -461,7 +466,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                       type="button"
                       onClick={() => reportMutation.mutate("json")}
                       disabled={reportMutation.isPending}
-                      className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <FileJson className="size-4" aria-hidden="true" />
                       Unduh JSON
@@ -470,15 +475,13 @@ export function ScanView({ scanId }: { scanId: string }) {
                 </article>
               </section>
 
-              <section className="mt-10">
-                <div>
-                  <h2 className="text-xl font-black">Pelanggaran otomatis</h2>
+              <section className="mt-9 sm:mt-10">
+                <h2 className="text-xl font-black">Pelanggaran otomatis</h2>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Tinjau setiap aturan, selector, DOM snippet, dan saran
-                    perbaikannya.
-                  </p>
-                </div>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  Tinjau setiap aturan, selector, DOM snippet, dan saran
+                  perbaikannya.
+                </p>
 
                 <div className="mt-5">
                   {violationsQuery.isPending ? (
@@ -492,14 +495,14 @@ export function ScanView({ scanId }: { scanId: string }) {
                       }
                     />
                   ) : violations.length === 0 ? (
-                    <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:rounded-3xl sm:p-6 dark:border-emerald-400/20 dark:bg-emerald-400/10">
                       <div className="flex items-start gap-4">
                         <CheckCircle2
                           className="mt-0.5 size-6 shrink-0 text-emerald-600 dark:text-emerald-400"
                           aria-hidden="true"
                         />
 
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="font-black text-emerald-950 dark:text-emerald-100">
                             Tidak ditemukan pelanggaran otomatis pada aturan
                             yang diperiksa.
@@ -526,10 +529,10 @@ export function ScanView({ scanId }: { scanId: string }) {
                 </div>
               </section>
 
-              <section className="mt-10">
+              <section className="mt-9 sm:mt-10">
                 <h2 className="text-xl font-black">Pemeriksaan manual</h2>
 
-                <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
                   Otomatisasi tidak dapat menilai seluruh pengalaman pengguna.
                   Selesaikan checklist berikut secara manual.
                 </p>
@@ -564,7 +567,7 @@ export function ScanView({ scanId }: { scanId: string }) {
                 </div>
               </section>
 
-              <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-400/20 dark:bg-amber-400/10">
+              <section className="mt-9 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:mt-10 sm:rounded-3xl sm:p-6 dark:border-amber-400/20 dark:bg-amber-400/10">
                 <h2 className="font-black text-amber-950 dark:text-amber-100">
                   Batas hasil otomatis
                 </h2>
@@ -628,26 +631,26 @@ function ViolationCard({
   });
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl dark:border-white/10 dark:bg-white/[0.03]">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="flex w-full items-start justify-between gap-5 p-5 text-left sm:p-6"
+        className="flex w-full items-start justify-between gap-4 p-4 text-left transition hover:bg-slate-50 sm:gap-5 sm:p-6 dark:hover:bg-white/[0.02]"
         aria-expanded={expanded}
       >
-        <div>
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <ImpactBadge impact={violation.impact} />
             <ReviewBadge status={violation.review_status} />
           </div>
 
-          <h3 className="mt-4 font-black">{violation.help}</h3>
+          <h3 className="mt-4 break-words font-black">{violation.help}</h3>
 
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
             {violation.description}
           </p>
 
-          <code className="mt-3 inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-white/5 dark:text-slate-300">
+          <code className="mt-3 inline-flex max-w-full break-all rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-white/5 dark:text-slate-300">
             {violation.rule_id}
           </code>
         </div>
@@ -666,7 +669,7 @@ function ViolationCard({
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-200 bg-slate-50/70 p-5 dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+        <div className="border-t border-slate-200 bg-slate-50/70 p-4 sm:p-6 dark:border-white/10 dark:bg-white/[0.02]">
           {detailQuery.isPending ? (
             <LoadingState label="Memuat DOM snippet" />
           ) : detailQuery.error ? (
@@ -683,17 +686,17 @@ function ViolationCard({
                 detailQuery.data.nodes.map((node, index) => (
                   <div
                     key={node.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-950"
+                    className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-950"
                   >
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                       Node {index + 1}
                     </p>
 
-                    <p className="mt-3 break-all text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    <p className="mt-3 break-all text-sm font-semibold leading-6 text-blue-600 dark:text-blue-400">
                       {node.target.join(" ")}
                     </p>
 
-                    <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-slate-950 p-4 text-xs leading-6 text-slate-200">
+                    <pre className="mt-3 max-w-full overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs leading-6 text-slate-200">
                       <code>{node.html}</code>
                     </pre>
 
@@ -711,8 +714,8 @@ function ViolationCard({
                 />
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label>
+              <div className="grid gap-4 lg:grid-cols-[minmax(180px,0.4fr)_minmax(0,1fr)]">
+                <label className="min-w-0">
                   <span className="mb-2 block text-sm font-bold">
                     Status review
                   </span>
@@ -722,7 +725,7 @@ function ViolationCard({
                     onChange={(event) =>
                       setStatus(event.target.value as ReviewStatus)
                     }
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 dark:border-white/10 dark:bg-slate-950"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950"
                   >
                     {reviewStatuses.map((value) => (
                       <option key={value} value={value}>
@@ -732,7 +735,7 @@ function ViolationCard({
                   </select>
                 </label>
 
-                <label>
+                <label className="min-w-0">
                   <span className="mb-2 block text-sm font-bold">Catatan</span>
 
                   <textarea
@@ -740,18 +743,18 @@ function ViolationCard({
                     onChange={(event) => setNotes(event.target.value)}
                     maxLength={5000}
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-white/10 dark:bg-slate-950"
+                    className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950"
                     placeholder="Catatan hasil verifikasi..."
                   />
                 </label>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <button
                   type="button"
                   onClick={() => updateMutation.mutate()}
                   disabled={updateMutation.isPending}
-                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Save className="size-4" aria-hidden="true" />
 
@@ -763,7 +766,7 @@ function ViolationCard({
                     href={violation.help_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-bold text-blue-600 hover:underline dark:text-blue-400"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl px-2 text-sm font-bold text-blue-600 hover:underline sm:justify-start dark:text-blue-400"
                   >
                     Buka referensi aturan
                   </a>
@@ -812,14 +815,14 @@ function ManualReviewCard({
   });
 
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
             Pemeriksaan {item.position}
           </p>
 
-          <h3 className="mt-2 font-black">{item.criterion}</h3>
+          <h3 className="mt-2 break-words font-black">{item.criterion}</h3>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
             {item.instruction}
@@ -829,14 +832,14 @@ function ManualReviewCard({
         <ReviewBadge status={item.status} />
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-[0.4fr_1fr_auto] md:items-end">
-        <label>
+      <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-[minmax(180px,0.35fr)_minmax(0,1fr)_auto] lg:items-end">
+        <label className="min-w-0">
           <span className="mb-2 block text-sm font-bold">Status</span>
 
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value as ReviewStatus)}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 dark:border-white/10 dark:bg-slate-950"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950"
           >
             {reviewStatuses.map((value) => (
               <option key={value} value={value}>
@@ -846,7 +849,7 @@ function ManualReviewCard({
           </select>
         </label>
 
-        <label>
+        <label className="min-w-0">
           <span className="mb-2 block text-sm font-bold">Catatan</span>
 
           <textarea
@@ -855,7 +858,7 @@ function ManualReviewCard({
             maxLength={5000}
             rows={2}
             placeholder="Tuliskan hasil pemeriksaan..."
-            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-white/10 dark:bg-slate-950"
+            className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950"
           />
         </label>
 
@@ -863,7 +866,7 @@ function ManualReviewCard({
           type="button"
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
         >
           <Save className="size-4" aria-hidden="true" />
 

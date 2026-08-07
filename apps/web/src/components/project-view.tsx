@@ -23,7 +23,6 @@ import {
   LoadingState,
   StatusBadge,
 } from "@/components/ui-kit";
-import type { ProjectRequest } from "@/lib/api/types";
 import {
   createScan,
   deleteProject,
@@ -31,6 +30,7 @@ import {
   listScans,
   updateProject,
 } from "@/lib/api/services";
+import type { ProjectRequest } from "@/lib/api/types";
 import { formatDate, truncate } from "@/lib/format";
 
 const projectSchema = z.object({
@@ -163,7 +163,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
     <AppShell>
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+        className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
         Kembali ke dashboard
@@ -172,7 +172,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
       {projectQuery.isPending ? (
         <LoadingState label="Memuat project" />
       ) : projectQuery.error || !project ? (
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           <ErrorState
             message={
               projectQuery.error instanceof Error
@@ -183,7 +183,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
         </div>
       ) : (
         <>
-          <section className="mt-7 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-8">
+          <section className="mt-5 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:mt-7 sm:p-7 lg:p-8 dark:border-white/10 dark:bg-white/[0.03]">
             {editing ? (
               <form key={project.updated_at} onSubmit={submitProject}>
                 <div className="grid gap-5">
@@ -199,7 +199,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
                       required
                       minLength={2}
                       maxLength={120}
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                     />
                   </label>
 
@@ -213,16 +213,16 @@ export function ProjectView({ projectId }: { projectId: string }) {
                       defaultValue={project.description}
                       maxLength={1000}
                       rows={4}
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                      className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                     />
                   </label>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-60"
                   >
                     <Save className="size-4" aria-hidden="true" />
 
@@ -234,24 +234,24 @@ export function ProjectView({ projectId }: { projectId: string }) {
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold dark:border-white/10"
+                    className="min-h-11 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold transition hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/5"
                   >
                     Batal
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 sm:text-sm dark:text-blue-400">
                     Project
                   </p>
 
-                  <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+                  <h1 className="mt-2 break-words text-3xl font-black tracking-tight sm:text-4xl">
                     {project.name}
                   </h1>
 
-                  <p className="mt-3 max-w-3xl leading-7 text-slate-600 dark:text-slate-400">
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7 dark:text-slate-400">
                     {project.description ||
                       "Project ini belum memiliki deskripsi."}
                   </p>
@@ -261,11 +261,11 @@ export function ProjectView({ projectId }: { projectId: string }) {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     onClick={() => setEditing(true)}
-                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold dark:border-white/10 dark:bg-white/5"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
                   >
                     <Pencil className="size-4" aria-hidden="true" />
                     Edit
@@ -275,26 +275,26 @@ export function ProjectView({ projectId }: { projectId: string }) {
                     type="button"
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
-                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-60 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
                   >
                     <Trash2 className="size-4" aria-hidden="true" />
-                    Hapus
+                    {deleteMutation.isPending ? "Menghapus..." : "Hapus"}
                   </button>
                 </div>
               </div>
             )}
           </section>
 
-          <section className="mt-6 rounded-[2rem] bg-slate-950 p-6 text-white shadow-xl sm:p-8">
-            <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-blue-600">
+          <section className="mt-5 overflow-hidden rounded-[1.75rem] bg-slate-950 p-5 text-white shadow-xl sm:mt-6 sm:p-7 lg:p-8">
+            <div className="flex items-start gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-blue-600 sm:rounded-2xl">
                 <Globe2 className="size-5" aria-hidden="true" />
               </span>
 
-              <div>
-                <h2 className="text-xl font-black">Scan website</h2>
+              <div className="min-w-0">
+                <h2 className="text-lg font-black sm:text-xl">Scan website</h2>
 
-                <p className="text-sm text-slate-400">
+                <p className="mt-1 text-sm leading-6 text-slate-400">
                   Masukkan URL publik dengan protokol HTTP atau HTTPS.
                 </p>
               </div>
@@ -302,7 +302,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
 
             <form
               onSubmit={submitScan}
-              className="mt-6 flex flex-col gap-3 sm:flex-row"
+              className="mt-6 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
             >
               <input
                 type="url"
@@ -311,7 +311,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
                 required
                 maxLength={2048}
                 placeholder="https://example.com"
-                className="h-12 flex-1 rounded-xl border border-white/10 bg-white/10 px-4 text-sm outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
+                className="h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/10 px-4 text-sm outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
               />
 
               <button
@@ -326,10 +326,10 @@ export function ProjectView({ projectId }: { projectId: string }) {
             </form>
           </section>
 
-          <section className="mt-10">
+          <section className="mt-9 sm:mt-10">
             <h2 className="text-xl font-black">Histori project</h2>
 
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
               Seluruh pemindaian yang dilakukan dalam project ini.
             </p>
 
@@ -350,13 +350,13 @@ export function ProjectView({ projectId }: { projectId: string }) {
                   description="Masukkan URL di atas untuk memulai audit pertama pada project ini."
                 />
               ) : (
-                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {scansQuery.data.map((scan) => (
                       <Link
                         key={scan.id}
                         href={`/scans/${scan.id}`}
-                        className="grid gap-4 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-white/[0.03] md:grid-cols-[1fr_auto_auto_auto] md:items-center"
+                        className="grid min-w-0 gap-3 px-4 py-4 transition hover:bg-slate-50 sm:px-5 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto] lg:items-center lg:gap-5 dark:hover:bg-white/[0.03]"
                       >
                         <div className="min-w-0">
                           <p className="truncate font-bold">
