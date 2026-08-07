@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "dev": "concurrently --kill-others --names API,WORKER,WEB \"go run ./services/api/cmd/api\" \"go run ./services/worker/cmd/worker\" \"node apps/web/node_modules/next/dist/bin/next dev apps/web --hostname 127.0.0.1\"",
+    "dev": "node scripts/dev.mjs",
     "dev:web": "node apps/web/node_modules/next/dist/bin/next dev apps/web --hostname 127.0.0.1",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint",
