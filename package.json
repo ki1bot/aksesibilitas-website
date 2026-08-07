@@ -3,8 +3,8 @@
   "private": true,
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --names API,WORKER,WEB \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:web\"",
-    "dev:web": "pnpm --filter web dev",
+    "dev": "concurrently --kill-others --names API,WORKER,WEB \"go run ./services/api/cmd/api\" \"go run ./services/worker/cmd/worker\" \"node apps/web/node_modules/next/dist/bin/next dev apps/web --hostname 127.0.0.1\"",
+    "dev:web": "node apps/web/node_modules/next/dist/bin/next dev apps/web --hostname 127.0.0.1",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint",
     "typecheck:web": "pnpm --filter web typecheck",
